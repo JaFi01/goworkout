@@ -1,3 +1,229 @@
+import os
+import base64
+from django.contrib.postgres.fields import ArrayField
+from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, PermissionsMixin, UserManager
 from django.db import models
+import uuid
+from enum import Enum
+from django.utils import timezone
+from django.conf import settings
 
-# Create your models here.
+class Muscle(models.TextChoices):
+    ABDOMINALS = 'abdominals'
+    HAMSTRINGS = 'hamstrings'
+    ADDUCTORS = 'adductors'
+    QUADRICEPS = 'quadriceps'
+    BICEPS = 'biceps'
+    SHOULDERS = 'shoulders'
+    CHEST = 'chest'
+    MIDDLE_BACK = 'middle back'
+    CALVES = 'calves'
+    GLUTES = 'glutes'
+    LOWER_BACK = 'lower back'
+    LATS = 'lats'
+    TRICEPS = 'triceps'
+    TRAPS = 'traps'
+    FOREARMS = 'forearms'
+    NECK = 'neck'
+    ABDUCTORS = 'abductors'
+
+class ForceType(models.TextChoices):
+    PULL = 'pull'
+    PUSH = 'push'
+    STATIC = 'static'
+
+class LevelType(models.TextChoices):
+    BEGINNER = 'beginner'
+    INTERMEDIATE = 'intermediate'
+    EXPERT = 'expert'
+
+class MechanicType(models.TextChoices):
+    COMPOUND = 'compound'
+    ISOLATION = 'isolation'
+
+class EquipmentType(models.TextChoices):
+    BODY_ONLY = 'body only'
+    MACHINE = 'machine'
+    OTHER = 'other'
+    FOAM_ROLL = 'foam roll'
+    KETTLEBELLS = 'kettlebells'
+    DUMBBELL = 'dumbbell'
+    CABLE = 'cable'
+    BARBELL = 'barbell'
+    BANDS = 'bands'
+    MEDICINE_BALL = 'medicine ball'
+    EXERCISE_BALL = 'exercise ball'
+    EZ_CURL_BAR = 'e-z curl bar'
+
+class CategoryType(models.TextChoices):
+    STRENGTH = 'strength'
+    STRETCHING = 'stretching'
+    PLYOMETRICS = 'plyometrics'
+    STRONGMAN = 'strongman'
+    POWERLIFTING = 'powerlifting'
+    CARDIO = 'cardio'
+    OLYMPIC_WEIGHTLIFTING = 'olympic weightlifting'
+
+class Exercise(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    name = models.TextField(unique=True)
+    aliases = ArrayField(models.TextField(), blank=True, null=True)
+    primary_muscles = ArrayField(models.CharField(max_length=20, choices=Muscle.choices), blank=True, null=True)
+    secondary_muscles = ArrayField(models.CharField(max_length=20, choices=Muscle.choices), blank=True, null=True)
+    force = models.CharField(max_length=10, choices=ForceType.choices, blank=True, null=True)
+    level = models.CharField(max_length=15, choices=LevelType.choices)
+    mechanic = models.CharField(max_length=10, choices=MechanicType.choices, blank=True, null=True)
+    equipment = models.CharField(max_length=20, choices=EquipmentType.choices, blank=True, null=True)
+    category = models.CharField(max_length=25, choices=CategoryType.choices)
+    instructions = ArrayField(models.TextField(), blank=True, null=True)
+    description = models.TextField(blank=True, null=True)
+    tips = ArrayField(models.TextField(), blank=True, null=True)
+    date_created = models.DateTimeField(auto_now_add=True, null=True)
+    date_updated = models.DateTimeField(auto_now=True, null=True)
+    
+
+    class Meta:
+        db_table = 'exercises'
+
+
+    def __str__(self):
+        return self.name
+    
+class DayOfWeek(Enum):
+    MONDAY = 'Monday'
+    TUESDAY = 'Tuesday'
+    WEDNESDAY = 'Wednesday'
+    THURSDAY = 'Thursday'
+    FRIDAY = 'Friday'
+    SATURDAY = 'Saturday'
+    SUNDAY = 'Sunday'
+    
+    
+class ExerciseSet(models.Model):
+    exercise = models.ForeignKey(Exercise, on_delete=models.CASCADE)
+    series = models.PositiveIntegerField()
+    repetitions = models.PositiveIntegerField()
+    pause_time = models.PositiveIntegerField()
+    date_created = models.DateTimeField(default=timezone.now)
+    date_updated = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        db_table = 'exercise_sets'
+        
+    def __str__(self):
+        return f"{self.exercise.name} - Series:{self.series} x Reps:{self.repetitions}"
+
+class PlanForDay(models.Model):
+    day_name = models.CharField(max_length=10, choices=[(tag, tag.value) for tag in DayOfWeek])
+    custom_name = models.CharField(max_length=100, null=True, blank=True)
+    exercise_sets = models.ManyToManyField(ExerciseSet) # Changed to ManyToManyField
+    date_created = models.DateTimeField(default=timezone.now)
+    date_updated = models.DateTimeField(auto_now=True)
+    notes = models.TextField(blank=True, null=True, max_length=500)
+
+    class Meta:
+        db_table = 'plan_for_day'
+        
+    def __str__(self):
+        return f"Plan for {self.day_name} - {self.custom_name}"
+
+class WorkoutRoutine(models.Model):
+    routine_name = models.CharField(max_length=100)
+    plans_for_day = models.ManyToManyField(PlanForDay)
+    begin_date = models.DateField(blank=True, null=True)  # Add this line
+    end_date = models.DateField(blank=True, null=True)  # Add this line
+    is_current = models.BooleanField(default=False)
+    notes = models.TextField(blank=True, null=True, max_length=500)
+    is_public = models.BooleanField(default=False)
+    class Meta:
+        db_table = 'workout_routines'
+
+    def __str__(self):
+        return f"{self.routine_name } - {self.display_if_current()}"
+
+    def display_if_current(self):
+        return "CURRENT" if self.is_current else "NOT CURRENT"
+    
+#SECTION: User Model    
+class UserManager(BaseUserManager):
+    def create_user(self, username, email, password=None):
+        if not username:
+            raise ValueError('User must have a username')
+        if not email:
+            raise ValueError('User must have an email address')
+
+        user = self.model(
+            username=username, 
+            email=self.normalize_email(email)
+            )
+        user.set_password(password)
+        user.save(using=self._db)
+        return user
+
+    def create_superuser(self, username, email, password=None):
+        user = self.create_user( 
+            username=username, 
+            email=self.normalize_email(email),
+            password=password
+        )
+        user.is_admin = True
+        user.is_staff = True
+        user.is_active = True
+        user.is_superuser = True
+        user.save(using=self._db)
+        return user
+
+    
+class User(AbstractBaseUser):
+    #basic information section
+    username = models.CharField(max_length=100, unique=True)
+    email = models.EmailField(unique=True, max_length=100)
+    
+    #forced by django conventions
+    date_joined = models.DateTimeField(auto_now_add=True)
+    last_login = models.DateTimeField(auto_now_add=True)
+    created_date = models.DateTimeField(auto_now_add=True)
+    modified_date = models.DateTimeField(auto_now=True)
+    is_admin = models.BooleanField(default=False)
+    is_staff = models.BooleanField(default=False)
+    is_active = models.BooleanField(default=True)
+    is_superuser = models.BooleanField(default=False)
+    
+    
+    #TODO! Add profile picture handling
+    #profile_picture = models.ImageField(upload_to='profile_pics/', null=True, blank=True)
+    
+    #personal information section
+    date_of_birth = models.DateField(null=True, blank=True)
+    gender = models.CharField(max_length=10, choices=[('M', 'Male'), ('F', 'Female'), ('O', 'Other')], blank=True)
+    social_media_links = models.JSONField(default=dict, blank=True)
+    
+    #physical information section
+    height = models.FloatField(help_text=("Height in cm"), null=True, blank=True)
+    weight = models.FloatField(help_text=("Weight in kg"), null=True, blank=True)
+    fitness_level = models.CharField(
+        max_length=20,
+        choices=LevelType.choices,
+        default=LevelType.BEGINNER,
+        blank=True
+    )
+    disliked_exercises = models.TextField(blank=True) 
+    #!IMPORTANT User's workout routines
+    workout_routines = models.ForeignKey(WorkoutRoutine, on_delete=models.SET_NULL, null=True, blank=True)
+    
+    USERNAME_FIELD = 'username'
+    EMAIL_FIELD = 'email'
+    REQUIRED_FIELDS = ['email']
+    
+    objects = UserManager()
+    
+    def has_perm(self, perm, obj=None):
+        return self.is_admin
+    
+    def has_module_perms(self, app_label):
+        return True
+
+    class Meta:
+        db_table = 'users'
+        
+              
