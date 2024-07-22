@@ -1,10 +1,7 @@
-import os
-import base64
 from django.contrib.postgres.fields import ArrayField
-from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, PermissionsMixin, UserManager
+from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, UserManager
 from django.db import models
 import uuid
-from enum import Enum
 from django.utils import timezone
 from django.conf import settings
 
@@ -89,7 +86,7 @@ class Exercise(models.Model):
     def __str__(self):
         return self.name
     
-class DayOfWeek(Enum):
+class DayOfWeek(models.TextChoices):
     MONDAY = 'Monday'
     TUESDAY = 'Tuesday'
     WEDNESDAY = 'Wednesday'
@@ -104,8 +101,8 @@ class ExerciseSet(models.Model):
     series = models.PositiveIntegerField()
     repetitions = models.PositiveIntegerField()
     pause_time = models.PositiveIntegerField()
-    date_created = models.DateTimeField(default=timezone.now)
-    date_updated = models.DateTimeField(auto_now=True)
+    date_created = models.DateTimeField(default=timezone.now, editable=False)
+    date_updated = models.DateTimeField(auto_now=True, editable=False)
 
     class Meta:
         db_table = 'exercise_sets'
@@ -117,8 +114,8 @@ class PlanForDay(models.Model):
     day_name = models.CharField(max_length=10, choices=[(tag, tag.value) for tag in DayOfWeek])
     custom_name = models.CharField(max_length=100, null=True, blank=True)
     exercise_sets = models.ManyToManyField(ExerciseSet) # Changed to ManyToManyField
-    date_created = models.DateTimeField(default=timezone.now)
-    date_updated = models.DateTimeField(auto_now=True)
+    date_created = models.DateTimeField(default=timezone.now, editable=False)
+    date_updated = models.DateTimeField(auto_now=True, editable=False)
     notes = models.TextField(blank=True, null=True, max_length=500)
 
     class Meta:
