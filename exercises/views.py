@@ -42,3 +42,14 @@ class UserPreferencesView(LoginRequiredMixin, SuccessMessageMixin, UpdateView):
 
     def get_object(self, queryset=None):
         return self.request.user
+    
+    def form_valid(self, form):
+        response = super().form_valid(form)
+        self.object.update_bmi()  # Aktualizujemy BMI
+        self.object.save()
+        return response
+    
+    def get_form(self, form_class=None):
+        form = super().get_form(form_class)
+        form.fields['bmi'].initial = round(self.object.bmi, 2) if self.object.bmi is not None else None
+        return form

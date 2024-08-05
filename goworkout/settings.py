@@ -148,3 +148,5 @@ MEDIA_ROOT = BASE_DIR / "uploads"
 MEDIA_URL = "/files/"
 
 LOGIN_URL = '/login/'
+LOGIN_REDIRECT_URL = 'starting-page'
+LOGOUT_REDIRECT_URL = 'starting-page'

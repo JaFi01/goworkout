@@ -193,18 +193,18 @@ class User(AbstractBaseUser):
     #personal information section
     date_of_birth = models.DateField(null=True, blank=True)
     gender = models.CharField(max_length=10, choices=[('M', 'Male'), ('F', 'Female'), ('O', 'Other')], blank=True)
-    social_media_links = models.JSONField(default=dict, blank=True)
+    
     
     #physical information section
     height = models.FloatField(help_text=("Height in cm"), null=True, blank=True)
     weight = models.FloatField(help_text=("Weight in kg"), null=True, blank=True)
+    bmi = models.FloatField(help_text="Body Mass Index", null=True, blank=True, editable=False)
     fitness_level = models.CharField(
         max_length=20,
         choices=LevelType.choices,
         default=LevelType.BEGINNER,
         blank=True
     )
-    disliked_exercises = models.TextField(blank=True) 
     #!IMPORTANT User's workout routines
     workout_routines = models.ForeignKey(WorkoutRoutine, on_delete=models.SET_NULL, null=True, blank=True)
     
@@ -219,8 +219,21 @@ class User(AbstractBaseUser):
     
     def has_module_perms(self, app_label):
         return True
+    
+    def save(self, *args, **kwargs):
+        self.update_bmi()
+        super().save(*args, **kwargs)
+    
+    def update_bmi(self):
+        if self.height and self.weight and self.height > 0:
+            height_in_meters = self.height / 100
+            self.bmi = round(self.weight / (height_in_meters ** 2), 2)
+        else:
+            self.bmi = None
 
     class Meta:
         db_table = 'users'
+    
+
         
               
