@@ -10,6 +10,14 @@
                 <li class="nav-item">
                     <a class="nav-link" href="{% url 'starting-page' %}">Home</a>
                 </li>
+                {% if user.is_authenticated %}
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'workout_routine_list' %}">My Routines</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'workout_routine_create' %}">Create Routine</a>
+                    </li>
+                {% endif %}
             </ul>
             <ul class="navbar-nav">
                 {% if user.is_authenticated %}

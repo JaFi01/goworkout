@@ -1,5 +1,6 @@
 from django.contrib.postgres.fields import ArrayField
 from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, UserManager
+from django.contrib.auth import get_user_model
 from django.db import models
 import uuid
 from django.utils import timezone
@@ -124,7 +125,12 @@ class PlanForDay(models.Model):
     def __str__(self):
         return f"Plan for {self.day_name} - {self.custom_name}"
 
+def get_default_user():
+    User = get_user_model()
+    return User.objects.get_or_create(username='default_user')[0].id
+
 class WorkoutRoutine(models.Model):
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='user_workout_routines', null=True)
     routine_name = models.CharField(max_length=100)
     plans_for_day = models.ManyToManyField(PlanForDay)
     begin_date = models.DateField(blank=True, null=True)  # Add this line
@@ -205,8 +211,18 @@ class User(AbstractBaseUser):
         default=LevelType.BEGINNER,
         blank=True
     )
+
+    preferred_sport = models.CharField(
+        max_length=25,
+        choices=CategoryType.choices,
+        blank=True,
+        null=True
+    )
+
     #!IMPORTANT User's workout routines
-    workout_routines = models.ForeignKey(WorkoutRoutine, on_delete=models.SET_NULL, null=True, blank=True)
+    @property
+    def workout_routines(self):
+        return self.user_workout_routines.all()
     
     USERNAME_FIELD = 'username'
     EMAIL_FIELD = 'email'

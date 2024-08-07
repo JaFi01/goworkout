@@ -1,0 +1,32 @@
+{% extends 'base.html' %}
+
+{% block content %}
+  <h2 class="mb-4">{{ routine.routine_name }}</h2>
+  <div class="card mb-4">
+    <div class="card-body">
+      <p><strong>Begin Date:</strong> {{ routine.begin_date }}</p>
+      <p><strong>End Date:</strong> {{ routine.end_date }}</p>
+      <p><strong>Notes:</strong> {{ routine.notes }}</p>
+    </div>
+  </div>
+  
+  <h3 class="mb-3">Plans</h3>
+  <a href="{% url 'plan_for_day_create' routine.pk %}" class="btn btn-primary mb-3">Add New Plan</a>
+  {% for plan in routine.plans_for_day.all %}
+    <div class="card mb-3">
+      <div class="card-header">
+        <h4 class="mb-0">{{ plan.day_name }} - {{ plan.custom_name }}</h4>
+      </div>
+      <div class="card-body">
+        <ul class="list-group list-group-flush">
+          {% for exercise_set in plan.exercise_sets.all %}
+            <li class="list-group-item">{{ exercise_set }}</li>
+          {% endfor %}
+        </ul>
+        <a href="{% url 'exercise_set_create' plan.pk %}" class="btn btn-secondary mt-3">Add Exercise Set</a>
+      </div>
+    </div>
+  {% empty %}
+    <p class="text-muted">No plans yet.</p>
+  {% endfor %}
+{% endblock %}

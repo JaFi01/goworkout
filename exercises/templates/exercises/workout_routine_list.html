@@ -1,0 +1,18 @@
+{% extends 'base.html' %}
+
+{% block content %}
+  <h2 class="mb-4">Your Workout Routines</h2>
+  <a href="{% url 'workout_routine_create' %}" class="btn btn-primary mb-3">Create New Routine</a>
+  <div class="list-group">
+    {% for routine in routines %}
+      <a href="{% url 'workout_routine_detail' routine.pk %}" class="list-group-item list-group-item-action">
+        {{ routine.routine_name }}
+        {% if routine.is_current %}
+          <span class="badge bg-success float-end">Current</span>
+        {% endif %}
+      </a>
+    {% empty %}
+      <p class="text-muted">No routines yet.</p>
+    {% endfor %}
+  </div>
+{% endblock %}
