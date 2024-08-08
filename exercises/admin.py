@@ -12,12 +12,11 @@ class PlanForDayAdmin(admin.ModelAdmin):
     exclude = ('exercise_sets',)
 
 class PlanForDayInline(admin.TabularInline):
-    model = WorkoutRoutine.plans_for_day.through
+    model = PlanForDay
     extra = 1
 
 class WorkoutRoutineAdmin(admin.ModelAdmin):
     inlines = [PlanForDayInline]
-    exclude = ('plans_for_day',)
 
 admin.site.register(ExerciseSet)
 admin.site.register(PlanForDay, PlanForDayAdmin)

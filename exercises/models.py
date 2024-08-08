@@ -112,6 +112,7 @@ class ExerciseSet(models.Model):
         return f"{self.exercise.name} - Series:{self.series} x Reps:{self.repetitions}"
 
 class PlanForDay(models.Model):
+    fk_routine = models.ForeignKey('WorkoutRoutine', on_delete=models.CASCADE, null=True, related_name='routine_daily_plans')
     day_name = models.CharField(max_length=10, choices=[(tag, tag.value) for tag in DayOfWeek])
     custom_name = models.CharField(max_length=100, null=True, blank=True)
     exercise_sets = models.ManyToManyField(ExerciseSet) # Changed to ManyToManyField
@@ -132,7 +133,7 @@ def get_default_user():
 class WorkoutRoutine(models.Model):
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='user_workout_routines', null=True)
     routine_name = models.CharField(max_length=100)
-    plans_for_day = models.ManyToManyField(PlanForDay)
+    
     begin_date = models.DateField(blank=True, null=True)  # Add this line
     end_date = models.DateField(blank=True, null=True)  # Add this line
     is_current = models.BooleanField(default=False)
@@ -140,6 +141,10 @@ class WorkoutRoutine(models.Model):
     is_public = models.BooleanField(default=False)
     class Meta:
         db_table = 'workout_routines'
+
+    @property
+    def plans_for_day(self):
+        return self.routine_daily_plans.all()
 
     def __str__(self):
         return f"{self.routine_name } - {self.display_if_current()}"
