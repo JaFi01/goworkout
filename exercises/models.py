@@ -98,7 +98,8 @@ class DayOfWeek(models.TextChoices):
     
     
 class ExerciseSet(models.Model):
-    exercise = models.ForeignKey(Exercise, on_delete=models.CASCADE)
+    plan_for_day = models.ForeignKey('PlanForDay', on_delete=models.CASCADE, related_name='exercise_sets', null=True)
+    exercise = models.ForeignKey(Exercise, on_delete=models.CASCADE, null=True)
     series = models.PositiveIntegerField()
     repetitions = models.PositiveIntegerField()
     pause_time = models.PositiveIntegerField()
@@ -112,16 +113,21 @@ class ExerciseSet(models.Model):
         return f"{self.exercise.name} - Series:{self.series} x Reps:{self.repetitions}"
 
 class PlanForDay(models.Model):
-    fk_routine = models.ForeignKey('WorkoutRoutine', on_delete=models.CASCADE, null=True, related_name='routine_daily_plans')
+    fk_routine = models.ForeignKey('WorkoutRoutine', on_delete=models.CASCADE, null=True, related_name='plans_for_day')
     day_name = models.CharField(max_length=10, choices=[(tag, tag.value) for tag in DayOfWeek])
     custom_name = models.CharField(max_length=100, null=True, blank=True)
-    exercise_sets = models.ManyToManyField(ExerciseSet) # Changed to ManyToManyField
+    #CHANGE THIS TO PROPERTY
+    #exercise_sets = models.ManyToManyField(ExerciseSet) # Changed to ManyToManyField
     date_created = models.DateTimeField(default=timezone.now, editable=False)
     date_updated = models.DateTimeField(auto_now=True, editable=False)
     notes = models.TextField(blank=True, null=True, max_length=500)
 
     class Meta:
         db_table = 'plan_for_day'
+
+    @property
+    def exercise_sets(self):
+        return self.exercise_sets.all()
         
     def __str__(self):
         return f"Plan for {self.day_name} - {self.custom_name}"
@@ -142,9 +148,9 @@ class WorkoutRoutine(models.Model):
     class Meta:
         db_table = 'workout_routines'
 
-    @property
-    def plans_for_day(self):
-        return self.routine_daily_plans.all()
+    # @property
+    # def plans_for_day(self):
+    #     return self.routine_daily_plans.all()
 
     def __str__(self):
         return f"{self.routine_name } - {self.display_if_current()}"

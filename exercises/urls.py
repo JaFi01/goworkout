@@ -1,6 +1,6 @@
 from django.urls import path
 from . import views
-from .views import UserRegistrationView, UserLoginView, UserPreferencesView
+from .views import UserRegistrationView, UserLoginView, UserPreferencesView, AddPlanForDayView
 from django.contrib.auth.views import LogoutView
 
 urlpatterns = [
@@ -15,4 +15,5 @@ urlpatterns = [
     path('workout-routines/<int:pk>/', views.WorkoutRoutineDetailView.as_view(), name='workout_routine_detail'),
     path('workout-routines/<int:routine_pk>/add-plan/', views.PlanForDayCreateView.as_view(), name='plan_for_day_create'),
     path('plans/<int:plan_pk>/add-exercise-set/', views.ExerciseSetCreateView.as_view(), name='exercise_set_create'),
+    path('workout-routines/<int:workout_routine_id>/add-plan/', views.AddPlanForDayView.as_view(), name='add_plan_for_day'),
 ]

@@ -1,6 +1,7 @@
 from django.shortcuts import render
 from django.views import View
 from django.views.generic import CreateView, FormView, UpdateView, ListView, DetailView
+from django.shortcuts import get_object_or_404
 from django.contrib.auth.views import LoginView
 from django.contrib.auth import login
 from django.contrib.auth.mixins import LoginRequiredMixin
@@ -85,7 +86,9 @@ class PlanForDayCreateView(LoginRequiredMixin, CreateView):
 
     def form_valid(self, form):
         routine = WorkoutRoutine.objects.get(pk=self.kwargs['routine_pk'])
-        plan = form.save()
+        plan = form.save(commit=False)
+        plan.fk_routine = routine
+        plan.save()
         routine.plans_for_day.add(plan)
         return super().form_valid(form)
 
@@ -106,3 +109,21 @@ class ExerciseSetCreateView(LoginRequiredMixin, CreateView):
     def get_success_url(self):
         plan = PlanForDay.objects.get(pk=self.kwargs['plan_pk'])
         return reverse_lazy('workout_routine_detail', kwargs={'pk': plan.workoutroutine_set.first().pk})
+    
+class AddPlanForDayView(LoginRequiredMixin, CreateView):
+    model = PlanForDay
+    form_class = PlanForDayForm
+    template_name = 'exercises/plan_for_day_form.html'
+
+    def form_valid(self, form):
+        workout_routine = get_object_or_404(WorkoutRoutine, id=self.kwargs['workout_routine_id'])
+        form.instance.workout_routine = workout_routine
+        return super().form_valid(form)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['routine'] = get_object_or_404(WorkoutRoutine, id=self.kwargs['workout_routine_id'])
+        return context
+
+    def get_success_url(self):
+        return reverse_lazy('workout_routine_detail', kwargs={'pk': self.kwargs['workout_routine_id']})
