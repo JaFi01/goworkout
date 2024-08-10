@@ -5,7 +5,7 @@ from django.shortcuts import get_object_or_404
 from django.contrib.auth.views import LoginView
 from django.contrib.auth import login
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.urls import reverse_lazy
+from django.urls import reverse, reverse_lazy
 from django.contrib.messages.views import SuccessMessageMixin
 from .forms import UserRegistrationForm, UserPreferencesForm, WorkoutRoutineForm, PlanForDayForm, ExerciseSetForm
 from .models import User, WorkoutRoutine, PlanForDay, ExerciseSet
@@ -79,17 +79,27 @@ class WorkoutRoutineDetailView(LoginRequiredMixin, DetailView):
     template_name = 'exercises/workout_routine_detail.html'
     context_object_name = 'routine'
 
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['plans'] = self.object.plans_for_day.all().order_by('day_name')
+        return context
+
 class PlanForDayCreateView(LoginRequiredMixin, CreateView):
     model = PlanForDay
     form_class = PlanForDayForm
     template_name = 'exercises/plan_for_day_form.html'
 
+    def dispatch(self, request, *args, **kwargs):
+        self.workout_routine = get_object_or_404(WorkoutRoutine, pk=self.kwargs['routine_pk'])
+        return super().dispatch(request, *args, **kwargs)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['workout_routine'] = self.workout_routine
+        return context
+
     def form_valid(self, form):
-        routine = WorkoutRoutine.objects.get(pk=self.kwargs['routine_pk'])
-        plan = form.save(commit=False)
-        plan.fk_routine = routine
-        plan.save()
-        routine.plans_for_day.add(plan)
+        form.instance.fk_routine = self.workout_routine
         return super().form_valid(form)
 
     def get_success_url(self):
@@ -100,15 +110,16 @@ class ExerciseSetCreateView(LoginRequiredMixin, CreateView):
     form_class = ExerciseSetForm
     template_name = 'exercises/exercise_set_form.html'
 
+    def dispatch(self, request, *args, **kwargs):
+        self.plan = get_object_or_404(PlanForDay, pk=self.kwargs['plan_pk'])
+        return super().dispatch(request, *args, **kwargs)
+
     def form_valid(self, form):
-        plan = PlanForDay.objects.get(pk=self.kwargs['plan_pk'])
-        exercise_set = form.save()
-        plan.exercise_sets.add(exercise_set)
+        form.instance.plan_for_day = self.plan
         return super().form_valid(form)
 
     def get_success_url(self):
-        plan = PlanForDay.objects.get(pk=self.kwargs['plan_pk'])
-        return reverse_lazy('workout_routine_detail', kwargs={'pk': plan.workoutroutine_set.first().pk})
+        return reverse_lazy('workout_routine_detail', kwargs={'pk': self.plan.fk_routine.pk})
     
 class AddPlanForDayView(LoginRequiredMixin, CreateView):
     model = PlanForDay
@@ -127,3 +138,16 @@ class AddPlanForDayView(LoginRequiredMixin, CreateView):
 
     def get_success_url(self):
         return reverse_lazy('workout_routine_detail', kwargs={'pk': self.kwargs['workout_routine_id']})
+    
+class AddExerciseSetView(CreateView):
+    model = ExerciseSet
+    form_class = ExerciseSetForm
+    template_name = 'add_exercise_set.html'
+
+    def form_valid(self, form):
+        plan = PlanForDay.objects.get(id=self.kwargs['plan_id'])
+        form.instance.plan_for_day = plan
+        return super().form_valid(form)
+
+    def get_success_url(self):
+        return reverse('workout_routine_detail', kwargs={'pk': self.object.plan_for_day.fk_routine.id})

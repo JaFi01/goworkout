@@ -80,3 +80,8 @@ class ExerciseSetForm(forms.ModelForm):
     class Meta:
         model = ExerciseSet
         fields = ['exercise', 'series', 'repetitions', 'pause_time']
+
+class ExerciseSetForm(forms.ModelForm):
+    class Meta:
+        model = ExerciseSet
+        fields = ['exercise', 'series', 'repetitions', 'pause_time']

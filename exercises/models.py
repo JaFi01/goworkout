@@ -148,9 +148,9 @@ class WorkoutRoutine(models.Model):
     class Meta:
         db_table = 'workout_routines'
 
-    # @property
-    # def plans_for_day(self):
-    #     return self.routine_daily_plans.all()
+    @property
+    def plans_for_day(self):
+        return self.plans_for_day.all()
 
     def __str__(self):
         return f"{self.routine_name } - {self.display_if_current()}"
