@@ -1,3 +1,4 @@
+from django.http import JsonResponse
 from django.shortcuts import render
 from django.views import View
 from django.views.generic import CreateView, FormView, UpdateView, ListView, DetailView
@@ -6,9 +7,11 @@ from django.contrib.auth.views import LoginView
 from django.contrib.auth import login
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.urls import reverse, reverse_lazy
+from django.utils.decorators import method_decorator
+from django.views.decorators.http import require_POST
 from django.contrib.messages.views import SuccessMessageMixin
 from .forms import UserRegistrationForm, UserPreferencesForm, WorkoutRoutineForm, PlanForDayForm, ExerciseSetForm
-from .models import User, WorkoutRoutine, PlanForDay, ExerciseSet
+from .models import User, WorkoutRoutine, PlanForDay, ExerciseSet, Exercise
 
 # Create your views here.
 class WelcomePageView(View):
@@ -82,6 +85,7 @@ class WorkoutRoutineDetailView(LoginRequiredMixin, DetailView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['plans'] = self.object.plans_for_day.all().order_by('day_name')
+        context['exercises'] = Exercise.objects.all()
         return context
 
 class PlanForDayCreateView(LoginRequiredMixin, CreateView):
@@ -151,3 +155,51 @@ class AddExerciseSetView(CreateView):
 
     def get_success_url(self):
         return reverse('workout_routine_detail', kwargs={'pk': self.object.plan_for_day.fk_routine.id})
+    
+class AddExerciseView(View):
+    @method_decorator(require_POST)
+    def dispatch(self, *args, **kwargs):
+        return super().dispatch(*args, **kwargs)
+
+    def post(self, request, *args, **kwargs):
+        plan_id = request.POST.get('plan_id')
+        exercise_id = request.POST.get('exercise')
+        series = request.POST.get('series')
+        repetitions = request.POST.get('repetitions')
+        pause_time = request.POST.get('pause_time')
+
+        plan = get_object_or_404(PlanForDay, id=plan_id)
+        exercise = get_object_or_404(Exercise, id=exercise_id)
+
+        exercise_set = ExerciseSet.objects.create(
+            plan_for_day=plan,
+            exercise=exercise,
+            series=series,
+            repetitions=repetitions,
+            pause_time=pause_time
+        )
+
+        return JsonResponse({'success': True})
+class EditExerciseView(View):
+    def post(self, request):
+        exercise_set_id = request.POST.get('exercise_set_id')
+        exercise_id = request.POST.get('exercise')
+        series = request.POST.get('series')
+        repetitions = request.POST.get('repetitions')
+        pause_time = request.POST.get('pause_time')
+
+        exercise_set = get_object_or_404(ExerciseSet, id=exercise_set_id)
+        exercise = get_object_or_404(Exercise, id=exercise_id)
+
+        exercise_set.exercise = exercise
+        exercise_set.series = series
+        exercise_set.repetitions = repetitions
+        exercise_set.pause_time = pause_time
+        exercise_set.save()
+
+        return JsonResponse({'success': True})
+class DeleteExerciseView(View):
+    def post(self, request, exercise_id):
+        exercise_set = get_object_or_404(ExerciseSet, id=exercise_id)
+        exercise_set.delete()
+        return JsonResponse({'success': True})

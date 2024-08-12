@@ -7,7 +7,7 @@
 <p>End Date: {{ routine.end_date }}</p>
 <p>Notes: {{ routine.notes }}</p>
 
-<h2>Plans</h2>
+<h2>Daily plans</h2>
 <a href="{% url 'add_plan_for_day' routine.id %}" class="btn btn-primary">Add New Plan</a>
 
 {% if plans %}
@@ -20,19 +20,205 @@
                 <p>{{ plan.notes }}</p>
                 <h4>Exercises</h4>
                 {% if plan.exercise_sets.all %}
-                    <ul>
-                    {% for exercise_set in plan.exercise_sets.all %}
-                        <li>{{ exercise_set.exercise.name }} - {{ exercise_set.series }} x {{ exercise_set.repetitions }}</li>
-                    {% endfor %}
-                    </ul>
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th scope="col">Exercise</th>
+                                <th scope="col">Series</th>
+                                <th scope="col">Repetitions</th>
+                                <th scope="col">Pause Time</th>
+                                <th scope="col">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for exercise_set in plan.exercise_sets.all %}
+                                <tr>
+                                    <td>{{ exercise_set.exercise.name }}</td>
+                                    <td>{{ exercise_set.series }}</td>
+                                    <td>{{ exercise_set.repetitions }}</td>
+                                    <td>{{ exercise_set.pause_time }}</td>
+                                    <td>
+                                        <button class="btn btn-sm btn-warning edit-exercise" data-exercise-id="{{ exercise_set.id }}">Edit</button>
+                                        <button class="btn btn-sm btn-danger delete-exercise" data-exercise-id="{{ exercise_set.id }}">Delete</button>
+                                    </td>
+                                </tr>
+                                <tr class="edit-form" id="edit-form-{{ exercise_set.id }}" style="display: none;">
+                                    <td colspan="5">
+                                        <form class="exercise-edit-form">
+                                            {% csrf_token %}
+                                            <input type="hidden" name="exercise_set_id" value="{{ exercise_set.id }}">
+                                            <div class="form-group">
+                                                <label>Exercise:</label>
+                                                <select name="exercise" class="form-control" required>
+                                                    {% for exercise in exercises %}
+                                                        <option value="{{ exercise.id }}" {% if exercise.id == exercise_set.exercise.id %}selected{% endif %}>{{ exercise.name }}</option>
+                                                    {% endfor %}
+                                                </select>
+                                            </div>
+                                            <div class="form-group">
+                                                <label>Series:</label>
+                                                <input type="number" name="series" class="form-control" value="{{ exercise_set.series }}" min="1" required>
+                                            </div>
+                                            <div class="form-group">
+                                                <label>Repetitions:</label>
+                                                <input type="number" name="repetitions" class="form-control" value="{{ exercise_set.repetitions }}" min="1" required>
+                                            </div>
+                                            <div class="form-group">
+                                                <label>Pause time (seconds):</label>
+                                                <input type="number" name="pause_time" class="form-control" value="{{ exercise_set.pause_time }}" min="0" required>
+                                            </div>
+                                            <button type="submit" class="btn btn-success mt-2">Save changes</button>
+                                            <button type="button" class="btn btn-secondary mt-2 cancel-edit">Cancel</button>
+                                        </form>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
                 {% else %}
                     <p>No exercises added yet.</p>
                 {% endif %}
-                <!-- Dodać URL do dodawania ćwiczeń -->
+                <button class="btn btn-primary add-exercise" data-plan-id="{{ plan.id }}">Add exercise</button>
+                
+                <form class="exercise-form" id="exercise-form-{{ plan.id }}" style="display: none;">
+                    {% csrf_token %}
+                    <input type="hidden" name="plan_id" value="{{ plan.id }}">
+                    
+                    <div class="form-group">
+                        <label for="exercise-{{ plan.id }}">Exercise:</label>
+                        <select name="exercise" id="exercise-{{ plan.id }}" class="form-control" required>
+                            {% for exercise in exercises %}
+                                <option value="{{ exercise.id }}">{{ exercise.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="series-{{ plan.id }}">Series:</label>
+                        <input type="number" name="series" id="series-{{ plan.id }}" class="form-control" min="1" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="repetitions-{{ plan.id }}">Repetitions:</label>
+                        <input type="number" name="repetitions" id="repetitions-{{ plan.id }}" class="form-control" min="1" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="pause_time-{{ plan.id }}">Pause time (seconds):</label>
+                        <input type="number" name="pause_time" id="pause_time-{{ plan.id }}" class="form-control" min="0" required>
+                    </div>
+                    
+                    <button type="submit" class="btn btn-success mt-2">Save changes</button>
+                </form>
             </div>
         </div>
     {% endfor %}
 {% else %}
     <p>No plans yet.</p>
 {% endif %}
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const addButtons = document.querySelectorAll('.add-exercise');
+    addButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            const planId = this.dataset.planId;
+            const form = document.getElementById(`exercise-form-${planId}`);
+            form.style.display = form.style.display === 'none' ? 'block' : 'none';
+        });
+    });
+
+    const forms = document.querySelectorAll('.exercise-form');
+    forms.forEach(form => {
+        form.addEventListener('submit', function(e) {
+            e.preventDefault();
+            const formData = new FormData(this);
+            fetch('{% url "add_exercise" %}', {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-CSRFToken': formData.get('csrfmiddlewaretoken')
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    location.reload();
+                } else {
+                    alert('Błąd podczas dodawania ćwiczenia');
+                }
+            });
+        });
+    });
+});
+const editButtons = document.querySelectorAll('.edit-exercise');
+editButtons.forEach(button => {
+    button.addEventListener('click', function() {
+        const exerciseId = this.dataset.exerciseId;
+        const editForm = document.getElementById(`edit-form-${exerciseId}`);
+        editForm.style.display = 'table-row';
+        this.closest('tr').style.display = 'none';
+    });
+});
+
+// Canceling exercise edition
+const cancelButtons = document.querySelectorAll('.cancel-edit');
+cancelButtons.forEach(button => {
+    button.addEventListener('click', function() {
+        const editForm = this.closest('tr');
+        editForm.style.display = 'none';
+        editForm.previousElementSibling.style.display = 'table-row';
+    });
+});
+
+// Handling exercise edition
+const editForms = document.querySelectorAll('.exercise-edit-form');
+editForms.forEach(form => {
+    form.addEventListener('submit', function(e) {
+        e.preventDefault();
+        const formData = new FormData(this);
+        fetch('{% url "edit_exercise" %}', {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-CSRFToken': formData.get('csrfmiddlewaretoken')
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                location.reload();
+            } else {
+                alert('Error during editing of exercise');
+            }
+        });
+    });
+});
+
+// Handling exercise deletion
+const deleteButtons = document.querySelectorAll('.delete-exercise');
+deleteButtons.forEach(button => {
+    button.addEventListener('click', function() {
+        const exerciseId = this.dataset.exerciseId;
+        if (confirm('Are You sure You want to delete this exercise?')) {
+            fetch(`/delete-exercise/${exerciseId}/`, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    location.reload();
+                } else {
+                    alert('Error during removal of exercise');
+                }
+            });
+        }
+    });
+});
+</script>
 {% endblock %}
