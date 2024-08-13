@@ -1,4 +1,5 @@
 from django import forms
+from django.core.exceptions import ValidationError
 from django.contrib.auth.forms import UserCreationForm
 from .models import User, LevelType, CategoryType, WorkoutRoutine, PlanForDay, ExerciseSet, Exercise
 from datetime import date
@@ -69,11 +70,51 @@ class WorkoutRoutineForm(forms.ModelForm):
 
         return cleaned_data
 
-class PlanForDayForm(forms.ModelForm):
-    class Meta:
-        model = PlanForDay
-        fields = ['day_name', 'custom_name', 'notes']
+class PlanForDayForm(forms.Form):
+    day_of_week = forms.ChoiceField(
+        label="Day of Week",
+        choices=PlanForDay.DAYS_OF_WEEK,
+        error_messages={
+            "required": "Please select a day of the week.",
+        }
+    )
+    custom_name = forms.CharField(
+        label="Custom Name",
+        max_length=100,
+        required=False,
+        widget=forms.TextInput(attrs={'placeholder': 'Optional custom name for this plan'})
+    )
+    notes = forms.CharField(
+        label="Notes",
+        widget=forms.Textarea,
+        required=False
+    )
 
+    def __init__(self, *args, **kwargs):
+        self.routine = kwargs.pop('routine', None)
+        super().__init__(*args, **kwargs)
+        if self.routine:
+            used_days = set(self.routine.plans_for_day.values_list('day_of_week', flat=True))
+            self.fields['day_of_week'].choices = [day for day in PlanForDay.DAYS_OF_WEEK if day[0] not in used_days]
+
+    def clean_day_of_week(self):
+        day_of_week = self.cleaned_data.get('day_of_week')
+        if self.routine:
+            if PlanForDay.objects.filter(fk_routine=self.routine, day_of_week=day_of_week).exists():
+                raise forms.ValidationError("This day is already assigned to this routine.")
+        return day_of_week
+
+    def save(self, commit=True):
+        plan = PlanForDay(
+            fk_routine=self.routine,
+            day_of_week=self.cleaned_data['day_of_week'],
+            custom_name=self.cleaned_data['custom_name'],
+            notes=self.cleaned_data['notes']
+        )
+        if commit:
+            plan.save()
+        return plan
+    
 class ExerciseSetForm(forms.ModelForm):
     exercise = forms.ModelChoiceField(queryset=Exercise.objects.all())
     

@@ -21,4 +21,5 @@ urlpatterns = [
     path('add-exercise/', views.AddExerciseView.as_view(), name='add_exercise'),
     path('edit-exercise/', views.EditExerciseView.as_view(), name='edit_exercise'),
     path('delete-exercise/<int:exercise_id>/', views.DeleteExerciseView.as_view(), name='delete_exercise'),
+    path('workout-routines/<int:routine_id>/analyze/', views.AnalyzeRoutineView.as_view(), name='analyze_routine'),
 ]

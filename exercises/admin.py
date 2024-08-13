@@ -21,14 +21,14 @@ class ExerciseSetInline(admin.TabularInline):
 @admin.register(PlanForDay)
 class PlanForDayAdmin(admin.ModelAdmin):
     inlines = [ExerciseSetInline]
-    list_display = ('day_name', 'custom_name', 'fk_routine')
-    search_fields = ('day_name', 'custom_name')
-    list_filter = ('day_name', 'fk_routine')
+    list_display = ('get_day_of_week_display', 'custom_name', 'fk_routine')
+    search_fields = ('custom_name', 'fk_routine__routine_name')
+    list_filter = ('day_of_week', 'fk_routine')
 
 class PlanForDayInline(admin.TabularInline):
     model = PlanForDay
     extra = 1
-    fields = ('day_name', 'custom_name')
+    fields = ('day_of_week', 'custom_name')
 
 @admin.register(WorkoutRoutine)
 class WorkoutRoutineAdmin(admin.ModelAdmin):
@@ -40,5 +40,5 @@ class WorkoutRoutineAdmin(admin.ModelAdmin):
 @admin.register(ExerciseSet)
 class ExerciseSetAdmin(admin.ModelAdmin):
     list_display = ('exercise', 'plan_for_day', 'series', 'repetitions', 'pause_time')
-    list_filter = ('plan_for_day__day_name', 'exercise__category')
+    list_filter = ('plan_for_day__day_of_week', 'exercise__category')
     search_fields = ('exercise__name', 'plan_for_day__custom_name')

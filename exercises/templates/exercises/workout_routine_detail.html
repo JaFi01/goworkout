@@ -6,15 +6,16 @@
 <p>Begin Date: {{ routine.begin_date }}</p>
 <p>End Date: {{ routine.end_date }}</p>
 <p>Notes: {{ routine.notes }}</p>
+<button id="analyzeButton" class="btn btn-primary mb-3">Analizuj plan</button>
 
 <h2>Daily plans</h2>
-<a href="{% url 'add_plan_for_day' routine.id %}" class="btn btn-primary">Add New Plan</a>
+<a href="{% url 'add_plan_for_day' routine.id %}" class="btn btn-primary">Add New Day</a>
 
 {% if plans %}
     {% for plan in plans %}
         <div class="card mt-3">
             <div class="card-header">
-                <h3>{{ plan.get_day_name_display }} - {{ plan.custom_name }}</h3>
+                <h3>{{ plan.get_day_of_week_display }} - {{ plan.custom_name }}</h3>
             </div>
             <div class="card-body">
                 <p>{{ plan.notes }}</p>
@@ -219,6 +220,18 @@ deleteButtons.forEach(button => {
             });
         }
     });
+});
+
+// Handling routine analysis
+document.getElementById('analyzeButton').addEventListener('click', function() {
+    fetch('{% url "analyze_routine" routine.id %}')
+        .then(response => response.json())
+        .then(data => {
+            console.log('Analiza wykonana. Sprawdź konsolę serwera.');
+        })
+        .catch(error => {
+            console.error('Błąd:', error);
+        });
 });
 </script>
 {% endblock %}

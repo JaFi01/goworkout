@@ -113,8 +113,18 @@ class ExerciseSet(models.Model):
         return f"{self.exercise.name} - Series:{self.series} x Reps:{self.repetitions}"
 
 class PlanForDay(models.Model):
+    DAYS_OF_WEEK = [
+        (1, 'Monday'),
+        (2, 'Tuesday'),
+        (3, 'Wednesday'),
+        (4, 'Thursday'),
+        (5, 'Friday'),
+        (6, 'Saturday'),
+        (7, 'Sunday'),
+    ]
+     
     fk_routine = models.ForeignKey('WorkoutRoutine', on_delete=models.CASCADE, null=True, related_name='plans_for_day')
-    day_name = models.CharField(max_length=10, choices=[(tag, tag.value) for tag in DayOfWeek])
+    day_of_week = models.IntegerField(choices=DAYS_OF_WEEK, default=1)
     custom_name = models.CharField(max_length=100, null=True, blank=True)
     #CHANGE THIS TO PROPERTY
     #exercise_sets = models.ManyToManyField(ExerciseSet) # Changed to ManyToManyField
@@ -124,13 +134,15 @@ class PlanForDay(models.Model):
 
     class Meta:
         db_table = 'plan_for_day'
+        ordering = ['day_of_week']
+        unique_together = ['fk_routine', 'day_of_week']
 
     @property
     def exercise_sets(self):
         return self.exercise_sets.all()
         
     def __str__(self):
-        return f"Plan for {self.day_name} - {self.custom_name}"
+        return f"Plan for {self.get_day_of_week_display()} - {self.custom_name}"
 
 def get_default_user():
     User = get_user_model()
@@ -157,6 +169,9 @@ class WorkoutRoutine(models.Model):
 
     def display_if_current(self):
         return "CURRENT" if self.is_current else "NOT CURRENT"
+    
+    def count_daily_plans(self):
+        return self.plans_for_day.count()
     
 #SECTION: User Model    
 class UserManager(BaseUserManager):

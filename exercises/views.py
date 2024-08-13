@@ -1,8 +1,9 @@
-from django.http import JsonResponse
+from django.http import HttpResponseRedirect, JsonResponse
 from django.shortcuts import render
 from django.views import View
 from django.views.generic import CreateView, FormView, UpdateView, ListView, DetailView
 from django.shortcuts import get_object_or_404
+from django.contrib import messages
 from django.contrib.auth.views import LoginView
 from django.contrib.auth import login
 from django.contrib.auth.mixins import LoginRequiredMixin
@@ -12,7 +13,7 @@ from django.views.decorators.http import require_POST
 from django.contrib.messages.views import SuccessMessageMixin
 from .forms import UserRegistrationForm, UserPreferencesForm, WorkoutRoutineForm, PlanForDayForm, ExerciseSetForm
 from .models import User, WorkoutRoutine, PlanForDay, ExerciseSet, Exercise
-
+from django.db import IntegrityError
 # Create your views here.
 class WelcomePageView(View):
     def get(self, request):
@@ -84,9 +85,18 @@ class WorkoutRoutineDetailView(LoginRequiredMixin, DetailView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['plans'] = self.object.plans_for_day.all().order_by('day_name')
+        context['plans'] = self.object.plans_for_day.all().order_by('day_of_week')
         context['exercises'] = Exercise.objects.all()
+        context['daily_plans_count'] = self.object.count_daily_plans()
+        context['available_days'] = self.get_available_days()
+        
+        daily_plans_count = self.object.count_daily_plans()
+        #print(daily_plans_count)
         return context
+    
+    def get_available_days(self):
+        used_days = set(self.object.plans_for_day.values_list('day_of_week', flat=True))
+        return [day for day in PlanForDay.DAYS_OF_WEEK if day[0] not in used_days]
 
 class PlanForDayCreateView(LoginRequiredMixin, CreateView):
     model = PlanForDay
@@ -126,22 +136,25 @@ class ExerciseSetCreateView(LoginRequiredMixin, CreateView):
         return reverse_lazy('workout_routine_detail', kwargs={'pk': self.plan.fk_routine.pk})
     
 class AddPlanForDayView(LoginRequiredMixin, CreateView):
-    model = PlanForDay
     form_class = PlanForDayForm
     template_name = 'exercises/plan_for_day_form.html'
 
-    def form_valid(self, form):
-        workout_routine = get_object_or_404(WorkoutRoutine, id=self.kwargs['workout_routine_id'])
-        form.instance.workout_routine = workout_routine
-        return super().form_valid(form)
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        self.routine = get_object_or_404(WorkoutRoutine, id=self.kwargs['workout_routine_id'])
+        kwargs['routine'] = self.routine
+        return kwargs
 
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context['routine'] = get_object_or_404(WorkoutRoutine, id=self.kwargs['workout_routine_id'])
-        return context
+    def form_valid(self, form):
+        try:
+            self.object = form.save()
+            return HttpResponseRedirect(self.get_success_url())
+        except IntegrityError:
+            messages.error(self.request, "This day is already assigned to this routine.")
+            return self.form_invalid(form)
 
     def get_success_url(self):
-        return reverse_lazy('workout_routine_detail', kwargs={'pk': self.kwargs['workout_routine_id']})
+        return reverse_lazy('workout_routine_detail', kwargs={'pk': self.routine.id})
     
 class AddExerciseSetView(CreateView):
     model = ExerciseSet
@@ -203,3 +216,10 @@ class DeleteExerciseView(View):
         exercise_set = get_object_or_404(ExerciseSet, id=exercise_id)
         exercise_set.delete()
         return JsonResponse({'success': True})
+    
+class AnalyzeRoutineView(LoginRequiredMixin, View):
+    def get(self, request, routine_id):
+        routine = get_object_or_404(WorkoutRoutine, id=routine_id, user=request.user)
+        daily_plans_count = routine.count_daily_plans()
+        print(f"Liczba planów dziennych dla rutyny '{routine.routine_name}': {daily_plans_count}")
+        return JsonResponse({'status': 'success'})

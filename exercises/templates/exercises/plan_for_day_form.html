@@ -1,10 +1,41 @@
 {% extends 'base.html' %}
 
 {% block content %}
-  <h2>Add Plan for {{ routine.routine_name }}</h2>
+<div class="container mt-5">
+  <h2>Add Plan for {{ routine.name }}'s Routine</h2>
   <form method="post">
     {% csrf_token %}
-    {{ form.as_p }}
-    <button type="submit" class="btn btn-primary">Add Plan</button>
+    <div class="form-group">
+      {{ form.day_of_week.label_tag }}
+      {{ form.day_of_week }}
+      {% if form.day_of_week.errors %}
+        <div class="alert alert-danger">
+          {{ form.day_of_week.errors }}
+        </div>
+      {% endif %}
+    </div>
+
+    <div class="form-group">
+      {{ form.custom_name.label_tag }}
+      {{ form.custom_name }}
+      {% if form.custom_name.errors %}
+        <div class="alert alert-danger">
+          {{ form.custom_name.errors }}
+        </div>
+      {% endif %}
+    </div>
+
+    <div class="form-group">
+      {{ form.notes.label_tag }}
+      {{ form.notes }}
+      {% if form.notes.errors %}
+        <div class="alert alert-danger">
+          {{ form.notes.errors }}
+        </div>
+      {% endif %}
+    </div>
+
+    <button type="submit" class="btn btn-primary">Save Plan</button>
   </form>
+</div>
 {% endblock %}
