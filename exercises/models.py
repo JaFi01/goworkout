@@ -135,7 +135,7 @@ class PlanForDay(models.Model):
     class Meta:
         db_table = 'plan_for_day'
         ordering = ['day_of_week']
-        unique_together = ['fk_routine', 'day_of_week']
+        #unique_together = ['fk_routine', 'day_of_week']
 
     @property
     def exercise_sets(self):

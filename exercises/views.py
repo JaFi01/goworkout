@@ -11,9 +11,10 @@ from django.urls import reverse, reverse_lazy
 from django.utils.decorators import method_decorator
 from django.views.decorators.http import require_POST
 from django.contrib.messages.views import SuccessMessageMixin
+from django.db.models import Count
 from .forms import UserRegistrationForm, UserPreferencesForm, WorkoutRoutineForm, PlanForDayForm, ExerciseSetForm
 from .models import User, WorkoutRoutine, PlanForDay, ExerciseSet, Exercise
-from django.db import IntegrityError
+
 # Create your views here.
 class WelcomePageView(View):
     def get(self, request):
@@ -83,12 +84,30 @@ class WorkoutRoutineDetailView(LoginRequiredMixin, DetailView):
     template_name = 'exercises/workout_routine_detail.html'
     context_object_name = 'routine'
 
+    def check_and_remove_duplicates(self):
+        routine = self.object
+        duplicates = (
+            PlanForDay.objects.filter(fk_routine=routine)
+            .values('day_of_week')
+            .annotate(count=Count('id'))
+            .filter(count__gt=1)
+        )
+
+        for duplicate in duplicates:
+            day = duplicate['day_of_week']
+            plans = PlanForDay.objects.filter(fk_routine=routine, day_of_week=day).order_by('id')
+            # Zachowaj najstarszy plan (z najniższym ID), usuń resztę
+            for plan in plans[1:]:
+                messages.warning(self.request, f"Usunięto duplikat planu dla {plan.get_day_of_week_display()}.")
+                plan.delete()
+
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['plans'] = self.object.plans_for_day.all().order_by('day_of_week')
         context['exercises'] = Exercise.objects.all()
         context['daily_plans_count'] = self.object.count_daily_plans()
         context['available_days'] = self.get_available_days()
+        self.check_and_remove_duplicates()
         
         daily_plans_count = self.object.count_daily_plans()
         #print(daily_plans_count)
@@ -134,24 +153,35 @@ class ExerciseSetCreateView(LoginRequiredMixin, CreateView):
 
     def get_success_url(self):
         return reverse_lazy('workout_routine_detail', kwargs={'pk': self.plan.fk_routine.pk})
-    
-class AddPlanForDayView(LoginRequiredMixin, CreateView):
+ 
+class AddPlanForDayView(CreateView):
+    model = PlanForDay
     form_class = PlanForDayForm
     template_name = 'exercises/plan_for_day_form.html'
 
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
         self.routine = get_object_or_404(WorkoutRoutine, id=self.kwargs['workout_routine_id'])
-        kwargs['routine'] = self.routine
         return kwargs
 
     def form_valid(self, form):
-        try:
-            self.object = form.save()
-            return HttpResponseRedirect(self.get_success_url())
-        except IntegrityError:
-            messages.error(self.request, "This day is already assigned to this routine.")
+        form.instance.fk_routine = self.routine
+        response = super().form_valid(form)
+        
+        # Sprawdź, czy istnieje już plan na ten dzień
+        existing_plans = PlanForDay.objects.filter(
+            fk_routine=self.routine,
+            day_of_week=form.instance.day_of_week
+        ).exclude(id=form.instance.id)
+        
+        if existing_plans.exists():
+            # Jeśli istnieje, usuń nowo dodany plan i wyświetl komunikat
+            form.instance.delete()
+            messages.error(self.request, "Plan for this day already exists. Please choose another day.")
             return self.form_invalid(form)
+        
+        messages.success(self.request, "Plan added successfully!")
+        return response
 
     def get_success_url(self):
         return reverse_lazy('workout_routine_detail', kwargs={'pk': self.routine.id})
