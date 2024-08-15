@@ -173,6 +173,12 @@ class WorkoutRoutine(models.Model):
     def count_daily_plans(self):
         return self.plans_for_day.count()
     
+    def save(self, *args, **kwargs):
+        if self.is_current:
+            # Ustawienie wszystkich innych planów użytkownika jako nieaktualne
+            WorkoutRoutine.objects.filter(user=self.user).exclude(pk=self.pk).update(is_current=False)
+        super().save(*args, **kwargs)
+    
 #SECTION: User Model    
 class UserManager(BaseUserManager):
     def create_user(self, username, email, password=None):

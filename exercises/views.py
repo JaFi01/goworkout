@@ -1,7 +1,7 @@
 from django.http import HttpResponseRedirect, JsonResponse
 from django.shortcuts import render
 from django.views import View
-from django.views.generic import CreateView, FormView, UpdateView, ListView, DetailView
+from django.views.generic import CreateView, FormView, UpdateView, ListView, DetailView, DeleteView
 from django.shortcuts import get_object_or_404
 from django.contrib import messages
 from django.contrib.auth.views import LoginView
@@ -14,7 +14,7 @@ from django.contrib.messages.views import SuccessMessageMixin
 from django.db.models import Count
 from .forms import UserRegistrationForm, UserPreferencesForm, WorkoutRoutineForm, PlanForDayForm, ExerciseSetForm
 from .models import User, WorkoutRoutine, PlanForDay, ExerciseSet, Exercise
-
+from .analysis import Analysis
 # Create your views here.
 class WelcomePageView(View):
     def get(self, request):
@@ -78,6 +78,20 @@ class WorkoutRoutineCreateView(LoginRequiredMixin, CreateView):
     def form_valid(self, form):
         form.instance.user = self.request.user
         return super().form_valid(form)
+    
+class WorkoutRoutineDeleteView(LoginRequiredMixin, DeleteView):
+    model = WorkoutRoutine
+    success_url = reverse_lazy('workout_routine_list')
+    
+    def get_queryset(self):
+        return WorkoutRoutine.objects.filter(user=self.request.user)
+
+    def delete(self, request, *args, **kwargs):
+        self.object = self.get_object()
+        success_url = self.get_success_url()
+        self.object.delete()
+        messages.success(self.request, "Workout routine deleted successfully.")
+        return HttpResponseRedirect(success_url)
 
 class WorkoutRoutineDetailView(LoginRequiredMixin, DetailView):
     model = WorkoutRoutine
@@ -117,6 +131,18 @@ class WorkoutRoutineDetailView(LoginRequiredMixin, DetailView):
         used_days = set(self.object.plans_for_day.values_list('day_of_week', flat=True))
         return [day for day in PlanForDay.DAYS_OF_WEEK if day[0] not in used_days]
 
+class WorkoutRoutineUpdateView(LoginRequiredMixin, UpdateView):
+    model = WorkoutRoutine
+    form_class = WorkoutRoutineForm
+    template_name = 'exercises/workout_routine_form.html'
+
+    def get_success_url(self):
+        return reverse_lazy('workout_routine_detail', kwargs={'pk': self.object.pk})
+
+    def get_object(self, queryset=None):
+        return get_object_or_404(WorkoutRoutine, pk=self.kwargs['pk'], user=self.request.user)
+
+
 class PlanForDayCreateView(LoginRequiredMixin, CreateView):
     model = PlanForDay
     form_class = PlanForDayForm
@@ -137,6 +163,21 @@ class PlanForDayCreateView(LoginRequiredMixin, CreateView):
 
     def get_success_url(self):
         return reverse_lazy('workout_routine_detail', kwargs={'pk': self.kwargs['routine_pk']})
+
+class PlanForDayUpdateView(LoginRequiredMixin, UpdateView):
+    model = PlanForDay
+    form_class = PlanForDayForm
+    template_name = 'exercises/plan_for_day_form.html'
+
+    def get_success_url(self):
+        return reverse_lazy('workout_routine_detail', kwargs={'pk': self.object.fk_routine.pk})
+
+class PlanForDayDeleteView(LoginRequiredMixin, DeleteView):
+    model = PlanForDay
+    template_name = 'exercises/plan_for_day_confirm_delete.html'
+
+    def get_success_url(self):
+        return reverse_lazy('workout_routine_detail', kwargs={'pk': self.object.fk_routine.pk})
 
 class ExerciseSetCreateView(LoginRequiredMixin, CreateView):
     model = ExerciseSet
@@ -223,6 +264,7 @@ class AddExerciseView(View):
         )
 
         return JsonResponse({'success': True})
+
 class EditExerciseView(View):
     def post(self, request):
         exercise_set_id = request.POST.get('exercise_set_id')
@@ -253,3 +295,14 @@ class AnalyzeRoutineView(LoginRequiredMixin, View):
         daily_plans_count = routine.count_daily_plans()
         print(f"Liczba planów dziennych dla rutyny '{routine.routine_name}': {daily_plans_count}")
         return JsonResponse({'status': 'success'})
+    
+class WorkoutRoutineAnalysisView(LoginRequiredMixin, DetailView):
+    model = WorkoutRoutine
+    template_name = 'exercises/workout_routine_analysis.html'
+    context_object_name = 'routine'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        analysis = Analysis(self.object)
+        context['analysis_report'] = analysis.get_analysis_report()
+        return context

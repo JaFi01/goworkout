@@ -1,0 +1,9 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<h1>Analiza planu treningowego: {{ routine.routine_name }}</h1>
+
+<pre>{{ analysis_report }}</pre>
+
+<a href="{% url 'workout_routine_detail' routine.pk %}" class="btn btn-primary">Powrót do szczegółów planu</a>
+{% endblock %}

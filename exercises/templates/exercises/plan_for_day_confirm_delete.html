@@ -1,0 +1,11 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<h2>Potwierdzenie usunięcia</h2>
+<p>Are You sure You want to delete daily routine:  "{{ object.custom_name }}" {{ object.get_day_of_week_display }}?</p>
+<form method="post">
+    {% csrf_token %}
+    <button type="submit" class="btn btn-danger">Yes, delete</button>
+    <a href="{% url 'workout_routine_detail' object.fk_routine.pk %}" class="btn btn-secondary">Cancel</a>
+</form>
+{% endblock %}

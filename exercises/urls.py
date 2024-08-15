@@ -12,6 +12,8 @@ urlpatterns = [
 
     path('workout-routines/', views.WorkoutRoutineListView.as_view(), name='workout_routine_list'),
     path('workout-routines/create/', views.WorkoutRoutineCreateView.as_view(), name='workout_routine_create'),
+    path('workout-routines/<int:pk>/delete/', views.WorkoutRoutineDeleteView.as_view(), name='workout_routine_delete'),
+
     path('workout-routines/<int:pk>/', views.WorkoutRoutineDetailView.as_view(), name='workout_routine_detail'),
     path('workout-routines/<int:routine_pk>/add-plan/', views.PlanForDayCreateView.as_view(), name='plan_for_day_create'),
     path('plans/<int:plan_pk>/add-exercise-set/', views.ExerciseSetCreateView.as_view(), name='exercise_set_create'),
@@ -22,4 +24,9 @@ urlpatterns = [
     path('edit-exercise/', views.EditExerciseView.as_view(), name='edit_exercise'),
     path('delete-exercise/<int:exercise_id>/', views.DeleteExerciseView.as_view(), name='delete_exercise'),
     path('workout-routines/<int:routine_id>/analyze/', views.AnalyzeRoutineView.as_view(), name='analyze_routine'),
+
+    path('plan/<int:pk>/edit/', views.PlanForDayUpdateView.as_view(), name='plan_for_day_edit'),
+    path('plan/<int:pk>/delete/', views.PlanForDayDeleteView.as_view(), name='plan_for_day_delete'),
+    path('workout-routine/<int:pk>/edit/', views.WorkoutRoutineUpdateView.as_view(), name='workout_routine_edit'),
+    path('workout-routines/<int:pk>/analysis/', views.WorkoutRoutineAnalysisView.as_view(), name='workout_routine_analysis'),
 ]
