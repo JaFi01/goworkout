@@ -1,9 +1,50 @@
 {% extends 'base.html' %}
 
 {% block content %}
-<h1>Analiza planu treningowego: {{ routine.routine_name }}</h1>
+<h1>Workout Routine Analysis: {{ routine.routine_name }}</h1>
 
-<pre>{{ analysis_report }}</pre>
+<h2>Trained Muscle Groups</h2>
+<table class="table">
+    <thead>
+        <tr>
+            <th>Muscle Group</th>
+            <th>Number of Exercises</th>
+            <th>Total Series</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for muscle, stats in trained_muscles.items %}
+        <tr>
+            <td>{{ muscle|title }}</td>
+            <td>{{ stats.exercise_count }}</td>
+            <td>{{ stats.total_series }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
 
-<a href="{% url 'workout_routine_detail' routine.pk %}" class="btn btn-primary">Powrót do szczegółów planu</a>
+<h2>Untrained Muscle Groups</h2>
+<ul>
+    {% for muscle in untrained_muscles %}
+    <li>{{ muscle|title }}</li>
+    {% endfor %}
+</ul>
+
+{% if repetition_range_check %}
+<h2>Repetition Range Analysis</h2>
+<p>Total exercises analyzed: {{ repetition_range_check.total_exercises }}</p>
+<p>Exercises in 8-12 repetition range: {{ repetition_range_check.exercises_in_range }}</p>
+<p>Percentage: {{ repetition_range_check.percentage }}%</p>
+<p>
+    {% if repetition_range_check.meets_criteria %}
+    <strong style="color: green;">You have enought exercises in 8-12 repetition range</strong>
+    {% else %}
+    <strong style="color: red;">Over half of important exercises are not in 8-12 range. Consider adjusting Your schedule.</strong>
+    {% endif %}
+</p>
+{% else %}
+<p>Repetition range analysis is not applicable for advanced fitness levels.</p>
+{% endif %}
+
+<a href="{% url 'workout_routine_detail' routine.pk %}" class="btn btn-primary mt-3">Back to Routine Details</a>
 {% endblock %}

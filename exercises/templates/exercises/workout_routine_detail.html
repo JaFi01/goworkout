@@ -7,6 +7,8 @@
 <p>End Date: {{ routine.end_date }}</p>
 <p>Notes: {{ routine.notes }}</p>
 <button id="analyzeButton" class="btn btn-primary mb-3">Analizuj plan</button>
+<a href="{% url 'workout_routine_analysis' routine.pk %}" class="btn btn-primary">Analizuj plan</a>
+
 
 <h2>Daily plans</h2>
 <a href="{% url 'add_plan_for_day' routine.id %}" class="btn btn-primary">Add New Day</a>

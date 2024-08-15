@@ -304,5 +304,6 @@ class WorkoutRoutineAnalysisView(LoginRequiredMixin, DetailView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         analysis = Analysis(self.object)
-        context['analysis_report'] = analysis.get_analysis_report()
+        analysis_report = analysis.get_analysis_report()
+        context.update(analysis_report)
         return context
