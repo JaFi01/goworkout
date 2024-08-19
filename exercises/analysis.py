@@ -95,6 +95,37 @@ class Analysis:
             "pull_deficit": pull_deficit,
             "push_deficit": push_deficit
         }
+    
+    def analyze_compound_isolation_ratio(self):
+        compound_exercises = 0
+        isolation_exercises = 0
+
+        for plan in self.workout_routine.plans_for_day.all():
+            for exercise_set in plan.exercise_sets.all():
+                exercise = exercise_set.exercise
+                if exercise.mechanic == 'compound':
+                    compound_exercises += 1
+                elif exercise.mechanic == 'isolation':
+                    isolation_exercises += 1
+
+        total_exercises = compound_exercises + isolation_exercises
+        if total_exercises == 0:
+            return {
+                "compound_exercises": 0,
+                "isolation_exercises": 0,
+                "compound_isolation_ratio": 0,
+                "enough_compound": False
+            }
+
+        compound_isolation_ratio = compound_exercises / isolation_exercises if isolation_exercises > 0 else float('inf')
+        enough_compound = compound_exercises > isolation_exercises
+
+        return {
+            "compound_exercises": compound_exercises,
+            "isolation_exercises": isolation_exercises,
+            "compound_isolation_ratio": round(compound_isolation_ratio, 2),
+            "enough_compound": enough_compound
+        }
 
 
     def get_analysis_report(self):
@@ -102,6 +133,7 @@ class Analysis:
         untrained_muscles = self.analyze_untrained_muscles()
         repetition_range_check = self.check_repetition_range()
         pull_push_analysis = self.analyze_pull_push_ratio()
+        compound_isolation_analysis = self.analyze_compound_isolation_ratio()
         
         return {
             
@@ -109,4 +141,5 @@ class Analysis:
             "untrained_muscles": untrained_muscles,
             "repetition_range_check": repetition_range_check,
             "pull_push_analysis": pull_push_analysis,
+            "compound_isolation_analysis": compound_isolation_analysis
         }
