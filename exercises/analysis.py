@@ -62,15 +62,51 @@ class Analysis:
             "percentage": round(percentage, 2),
             "meets_criteria": meets_criteria
         }
+    
+    def analyze_pull_push_ratio(self):
+        pull_series = 0
+        push_series = 0
+
+        for plan in self.workout_routine.plans_for_day.all():
+            for exercise_set in plan.exercise_sets.all():
+                exercise = exercise_set.exercise
+                if exercise.force == 'pull':
+                    pull_series += exercise_set.series
+                elif exercise.force == 'push':
+                    push_series += exercise_set.series
+
+        total_series = pull_series + push_series
+        if total_series <= 2:
+            return {
+                "pull_series": 0,
+                "push_series": 0,
+                "pull_push_ratio": 0,
+                "pull_deficit": False
+            }
+
+        pull_push_ratio = pull_series / push_series if push_series > 0 else float('inf')
+        pull_deficit = pull_push_ratio < 0.75
+        push_deficit = pull_push_ratio > 3
+
+        return {
+            "pull_series": pull_series,
+            "push_series": push_series,
+            "pull_push_ratio": round(pull_push_ratio, 2),
+            "pull_deficit": pull_deficit,
+            "push_deficit": push_deficit
+        }
 
 
     def get_analysis_report(self):
         trained_muscles = self.analyze_trained_muscles()
         untrained_muscles = self.analyze_untrained_muscles()
         repetition_range_check = self.check_repetition_range()
+        pull_push_analysis = self.analyze_pull_push_ratio()
         
         return {
+            
             "trained_muscles": trained_muscles,
             "untrained_muscles": untrained_muscles,
-            "repetition_range_check": repetition_range_check
+            "repetition_range_check": repetition_range_check,
+            "pull_push_analysis": pull_push_analysis,
         }

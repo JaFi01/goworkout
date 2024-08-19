@@ -46,5 +46,26 @@
 <p>Repetition range analysis is not applicable for advanced fitness levels.</p>
 {% endif %}
 
+<h2>Pull vs Push Analysis</h2>
+<p>Total Pull Series: {{ pull_push_analysis.pull_series }}</p>
+<p>Total Push Series: {{ pull_push_analysis.push_series }}</p>
+<p>Pull to Push Ratio: {{ pull_push_analysis.pull_push_ratio }}</p>
+
+{% if pull_push_analysis.pull_deficit %}
+    <p class="alert alert-warning">
+        <strong>Warning:</strong> Your workout routine has a deficit of pull exercises. 
+        Consider adding more pull exercises to balance your routine.
+    </p>
+{% elif pull_push_analysis.push_deficit %}
+    <p class="alert alert-warning">
+        <strong>Warning:</strong> Your workout routine has a deficit of push exercises. 
+        Consider adding more push exercises to balance your routine.
+    </p>
+{% else %}
+    <p class="alert alert-success">
+        Your pull to push ratio is well-balanced.
+    </p>
+{% endif %}
+
 <a href="{% url 'workout_routine_detail' routine.pk %}" class="btn btn-primary mt-3">Back to Routine Details</a>
 {% endblock %}
