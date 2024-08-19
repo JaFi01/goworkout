@@ -42,7 +42,7 @@ class UserPreferencesForm(forms.ModelForm):
 class WorkoutRoutineForm(forms.ModelForm):
     class Meta:
         model = WorkoutRoutine
-        fields = ['routine_name', 'begin_date', 'end_date', 'is_current', 'notes', 'is_public']
+        fields = ['routine_name', 'begin_date', 'end_date', 'is_current', 'notes', 'is_public', 'workout_type']
 
         widgets = {
             'routine_name': forms.TextInput(attrs={'class': 'form-control'}),
@@ -50,6 +50,7 @@ class WorkoutRoutineForm(forms.ModelForm):
             'end_date': forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}),
             'is_current': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
             'notes': forms.Textarea(attrs={'class': 'form-control'}),
+            'workout_type': forms.Select(choices=CategoryType.choices),
             'is_public': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
         }
 

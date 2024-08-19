@@ -1,7 +1,12 @@
 {% extends 'base.html' %}
 
 {% block content %}
-<h1>Workout Routine Analysis: {{ routine.routine_name }}</h1>
+<h1>Workout Routine Analysis: {{ routine.routine_name }}
+    {% if routine.workout_type and routine.workout_type != 'OTHER' %}
+    ({{ routine.workout_type|upper }})
+{% endif %}
+
+</h1>
 
 <h2>Trained Muscle Groups</h2>
 <table class="table">

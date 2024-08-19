@@ -148,6 +148,12 @@ def get_default_user():
     User = get_user_model()
     return User.objects.get_or_create(username='default_user')[0].id
 
+class WorkoutType(models.TextChoices):
+    FBW = 'FBW', 'Full Body Workout'
+    PPL = 'PPL', 'Push-Pull-Legs'
+    UL = 'UL', 'Upper-Lower'
+    OTHER = 'OTHER', 'Other'
+
 class WorkoutRoutine(models.Model):
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='user_workout_routines', null=True)
     routine_name = models.CharField(max_length=100)
@@ -157,6 +163,13 @@ class WorkoutRoutine(models.Model):
     is_current = models.BooleanField(default=False)
     notes = models.TextField(blank=True, null=True, max_length=500)
     is_public = models.BooleanField(default=False)
+
+    workout_type = models.CharField(
+        max_length=10,
+        choices=WorkoutType.choices,
+        default=WorkoutType.OTHER
+    )
+
     class Meta:
         db_table = 'workout_routines'
 
@@ -172,6 +185,17 @@ class WorkoutRoutine(models.Model):
     
     def count_daily_plans(self):
         return self.plans_for_day.count()
+    
+    def count_days(self):
+        if self.begin_date and self.end_date:
+            return (self.end_date - self.begin_date).days
+        return None
+    
+    def count_weeks(self):
+        days = self.count_days()
+        if days:
+            return days // 7
+        return None
     
     def save(self, *args, **kwargs):
         if self.is_current:

@@ -2,9 +2,19 @@
 
 {% block content %}
 <h1>{{ routine.routine_name }}</h1>
+<p>Type {{ routine.workout_type }}</p>
+<div>
+    <span>
+        <p>Begin Date: {{ routine.begin_date}} End Date: {{ routine.end_date }}</p>
+        <p> {% if routine.count_days is not None %}
+                Duration: {{ routine.count_days }} days ~ {{ routine.count_weeks }} weeks
+             {% else %}
+                Duration: Not specified
+            {% endif %}
+        </p>
+    </span>
+</div>
 
-<p>Begin Date: {{ routine.begin_date }}</p>
-<p>End Date: {{ routine.end_date }}</p>
 <p>Notes: {{ routine.notes }}</p>
 
 <a href="{% url 'workout_routine_analysis' routine.pk %}" class="btn btn-primary">Analizuj plan</a>
