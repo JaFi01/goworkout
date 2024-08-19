@@ -1,3 +1,4 @@
+from django import forms
 from django.http import HttpResponseRedirect, JsonResponse
 from django.shortcuts import render
 from django.views import View
@@ -26,9 +27,17 @@ class UserRegistrationView(SuccessMessageMixin, CreateView):
     success_url = reverse_lazy('user_preferences')
     success_message = "Your account was created successfully. Please set your preferences."
 
+    def get_form(self, form_class=None):
+        form = super().get_form(form_class)
+        for field in form.fields.values():
+            if not isinstance(field.widget, forms.CheckboxInput):
+                field.widget.attrs['class'] = 'form-control'
+            else:
+                field.widget.attrs['class'] = 'form-check-input'
+        return form
+
     def form_valid(self, form):
         response = super().form_valid(form)
-        # Log the user in after registration
         login(self.request, self.object)
         return response
 
@@ -58,7 +67,11 @@ class UserPreferencesView(LoginRequiredMixin, SuccessMessageMixin, UpdateView):
     def get_form(self, form_class=None):
         form = super().get_form(form_class)
         form.fields['bmi'].initial = round(self.object.bmi, 2) if self.object.bmi is not None else None
+        for field in form.fields.values():
+            if not isinstance(field.widget, forms.CheckboxInput):
+                field.widget.attrs.update({'class': 'form-control'})
         return form
+
     
 #WORKOUTS
 class WorkoutRoutineListView(LoginRequiredMixin, ListView):
