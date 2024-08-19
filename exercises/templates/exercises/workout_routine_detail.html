@@ -19,9 +19,15 @@
 
 <a href="{% url 'workout_routine_analysis' routine.pk %}" class="btn btn-primary">Analizuj plan</a>
 
+<button id="askAIButton" class="btn btn-primary mt-2">Ask AI</button>
+<div id="aiResponse" style="display: none;">
+    <h3>AI Analysis</h3>
+    <div id="aiResponseContent"></div>
+</div>
 
 <h2>Daily plans</h2>
 <a href="{% url 'add_plan_for_day' routine.id %}" class="btn btn-primary">Add New Day</a>
+
 
 {% if plans %}
     {% for plan in plans %}
@@ -133,9 +139,46 @@
 {% endif %}
 {% endblock %}
 
+
 {% block scripts %}
+{{ block.super }}
 <script>
 document.addEventListener('DOMContentLoaded', function() {
+    const askAIButton = document.getElementById('askAIButton');
+    if (askAIButton) {
+        askAIButton.addEventListener('click', function() {
+            handleAjaxRequest(
+                '{% url "ask_ai" routine.id %}',
+                'POST',
+                JSON.stringify({}),
+                function(data) {
+                    document.getElementById('aiResponseContent').innerHTML = data.ai_response;
+                    document.getElementById('aiResponse').style.display = 'block';
+                },
+                function(error) {
+                    console.error('Error:', error);
+                    alert('Wystąpił błąd podczas komunikacji z AI. Spróbuj ponownie później.');
+                }
+            );
+        });
+    } else {
+        console.warn('Przycisk "Ask AI" nie został znaleziony na stronie.');
+    }
+
+    function handleAjaxRequest(url, method, data, successCallback, errorCallback) {
+        fetch(url, {
+            method: method,
+            body: data,
+            headers: {
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+                'Content-Type': 'application/json'
+            }
+        })
+        .then(response => response.json())
+        .then(successCallback)
+        .catch(errorCallback);
+    }
+
     const addButtons = document.querySelectorAll('.add-exercise');
     addButtons.forEach(button => {
         button.addEventListener('click', function() {

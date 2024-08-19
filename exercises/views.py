@@ -1,3 +1,4 @@
+import os
 from django import forms
 from django.http import HttpResponseRedirect, JsonResponse
 from django.shortcuts import render
@@ -16,6 +17,11 @@ from django.db.models import Count
 from .forms import UserRegistrationForm, UserPreferencesForm, WorkoutRoutineForm, PlanForDayForm, ExerciseSetForm
 from .models import User, WorkoutRoutine, PlanForDay, ExerciseSet, Exercise
 from .analysis import Analysis
+from openai import OpenAI
+from django.conf import settings
+from dotenv import load_dotenv
+import markdown2
+
 # Create your views here.
 class WelcomePageView(View):
     def get(self, request):
@@ -320,3 +326,33 @@ class WorkoutRoutineAnalysisView(LoginRequiredMixin, DetailView):
         analysis_report = analysis.get_analysis_report()
         context.update(analysis_report)
         return context
+    
+class AskAIView(LoginRequiredMixin, View):
+    def post(self, request, routine_id):
+        load_dotenv()
+        routine = get_object_or_404(WorkoutRoutine, id=routine_id, user=request.user)
+        routine_data = self.prepare_routine_data(routine)
+        client = OpenAI()
+        client.api_key = os.getenv('OPENAI_API_KEY')
+        try:    
+            response  = client.chat.completions.create(
+                model="gpt-3.5-turbo",
+                messages=[
+                    {"role": "system", "content": "You are a fitness trainer and you are analyzing a workout routine. Provide your feedback."},
+                    {"role": "user", "content": f"Please give me feedback for my Workout Routine: {routine_data}"}
+                ]
+            )            
+            ai_response = response.choices[0].message.content
+            html_response = markdown2.markdown(ai_response)
+            #print(ai_response)
+            return JsonResponse({"ai_response": html_response})
+        except Exception as e:
+            return JsonResponse({"error": str(e)}, status=500)
+    
+    def prepare_routine_data(self, routine):
+        data = f"Routine name: {routine.routine_name}\n"
+        for plan in routine.plans_for_day.all():
+            data += f"\nDay: {plan.get_day_of_week_display()}\n"
+            for exercise_set in plan.exercise_sets.all():
+                data += f"- {exercise_set.exercise.name}: {exercise_set.series} x {exercise_set.repetitions}\n"
+        return data

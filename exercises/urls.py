@@ -29,4 +29,6 @@ urlpatterns = [
     path('plan/<int:pk>/delete/', views.PlanForDayDeleteView.as_view(), name='plan_for_day_delete'),
     path('workout-routine/<int:pk>/edit/', views.WorkoutRoutineUpdateView.as_view(), name='workout_routine_edit'),
     path('workout-routines/<int:pk>/analysis/', views.WorkoutRoutineAnalysisView.as_view(), name='workout_routine_analysis'),
+
+    path('workout-routines/<int:routine_id>/ask-ai/', views.AskAIView.as_view(), name='ask_ai'),
 ]
