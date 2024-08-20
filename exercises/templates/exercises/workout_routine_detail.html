@@ -59,8 +59,30 @@
                                     <td>{{ exercise_set.repetitions }}</td>
                                     <td>{{ exercise_set.pause_time }}</td>
                                     <td>
-                                        <button class="btn btn-sm btn-warning edit-exercise" data-exercise-id="{{ exercise_set.id }}">Edit</button>
-                                        <button class="btn btn-sm btn-danger delete-exercise" data-exercise-id="{{ exercise_set.id }}">Delete</button>
+                                        <button class="btn btn-info btn-sm how-to" data-exercise-id="{{ exercise_set.exercise.id }}">How to</button>
+                                        <button class="btn btn-danger btn-sm youtube-button" data-exercise-name="{{ exercise_set.exercise.name }}">
+                                            <i class="bi bi-youtube"></i>YouTube
+                                        </button>
+                                        <div class="btn-group" role="group" aria-label="Basic example">
+                                            <button class="btn btn-sm btn-warning edit-exercise" data-exercise-id="{{ exercise_set.id }}">Edit</button>
+                                            <button class="btn btn-sm btn-danger delete-exercise" data-exercise-id="{{ exercise_set.id }}">Delete</button>
+                                        </div>
+                                    </td>
+                                </tr>
+                                <tr class="instructions-row" style="display: none;">
+                                    <td colspan="5">
+                                        <div class="instructions">
+                                            <h5>Instructions:</h5>
+                                            {% if exercise_set.exercise.instructions %}
+                                                <ol>
+                                                    {% for instruction in exercise_set.exercise.instructions %}
+                                                        <li>{{ instruction }}</li>
+                                                    {% endfor %}
+                                                </ol>
+                                            {% else %}
+                                                <p>No instructions available for this exercise.</p>
+                                            {% endif %}
+                                        </div>
                                     </td>
                                 </tr>
                                 <tr class="edit-form" id="edit-form-{{ exercise_set.id }}" style="display: none;">
@@ -92,7 +114,7 @@
                                             <button type="button" class="btn btn-secondary mt-2 cancel-edit">Cancel</button>
                                         </form>
                                     </td>
-                                </tr>
+                                </tr>                             
                             {% endfor %}
                         </tbody>
                     </table>
@@ -139,9 +161,33 @@
 {% endif %}
 {% endblock %}
 
-
 {% block scripts %}
 {{ block.super }}
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const howToButtons = document.querySelectorAll('.how-to');
+        howToButtons.forEach(button => {
+            button.addEventListener('click', function() {
+                const instructionsRow = this.closest('tr').nextElementSibling;
+                if (instructionsRow.style.display === 'none' || instructionsRow.style.display === '') {
+                    instructionsRow.style.display = 'table-row';
+                } else {
+                    instructionsRow.style.display = 'none';
+                }
+            });
+        });
+        const youtubeButtons = document.querySelectorAll('.youtube-button');
+    youtubeButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            const exerciseName = this.getAttribute('data-exercise-name');
+            const searchQuery = encodeURIComponent(exerciseName + " exercise");
+            const youtubeSearchUrl = `https://www.youtube.com/results?search_query=${searchQuery}`;
+            window.open(youtubeSearchUrl, '_blank');
+        });
+    });
+});
+</script>
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     const askAIButton = document.getElementById('askAIButton');
@@ -290,5 +336,40 @@ document.getElementById('analyzeButton').addEventListener('click', function() {
             console.error('Błąd:', error);
         });
 });
-</script>
+
+function showInstructions(exerciseId) {
+    console.log('Show instructions clicked for exercise:', exerciseId);
+    
+    var instructionsRow = document.getElementById('instructions-' + exerciseId);
+    if (!instructionsRow) {
+        console.error('Nie znaleziono wiersza instrukcji dla ćwiczenia:', exerciseId);
+        return;
+    }
+    var instructionsContent = instructionsRow.querySelector('.instructions-content');
+
+    if (instructionsRow.style.display === 'table-row') {
+        instructionsRow.style.display = 'none';
+        return;
+    }
+
+    fetch('/exercise/' + exerciseId + '/instructions/')
+        .then(response => response.json())
+        .then(data => {
+            console.log('Otrzymane instrukcje:', data);
+            if (data.instructions && data.instructions.length > 0) {
+                var instructions = data.instructions.join('<br>');
+                instructionsContent.innerHTML = instructions;
+                instructionsRow.style.display = 'table-row';
+            } else {
+                instructionsContent.innerHTML = 'Brak dostępnych instrukcji.';
+                instructionsRow.style.display = 'table-row';
+            }
+        })
+        .catch(error => {
+            console.error('Błąd:', error);
+            alert('Nie udało się pobrać instrukcji. Błąd: ' + error);
+        });
+}
+    </script>
 {% endblock %}
+

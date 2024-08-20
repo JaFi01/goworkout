@@ -129,9 +129,8 @@ class WorkoutRoutineDetailView(LoginRequiredMixin, DetailView):
         for duplicate in duplicates:
             day = duplicate['day_of_week']
             plans = PlanForDay.objects.filter(fk_routine=routine, day_of_week=day).order_by('id')
-            # Zachowaj najstarszy plan (z najniższym ID), usuń resztę
             for plan in plans[1:]:
-                messages.warning(self.request, f"Usunięto duplikat planu dla {plan.get_day_of_week_display()}.")
+                messages.warning(self.request, f"Deleted duplicate routine for {plan.get_day_of_week_display()}.")
                 plan.delete()
 
     def get_context_data(self, **kwargs):
@@ -141,9 +140,7 @@ class WorkoutRoutineDetailView(LoginRequiredMixin, DetailView):
         context['daily_plans_count'] = self.object.count_daily_plans()
         context['available_days'] = self.get_available_days()
         self.check_and_remove_duplicates()
-        
-        daily_plans_count = self.object.count_daily_plans()
-        #print(daily_plans_count)
+
         return context
     
     def get_available_days(self):
@@ -356,3 +353,9 @@ class AskAIView(LoginRequiredMixin, View):
             for exercise_set in plan.exercise_sets.all():
                 data += f"- {exercise_set.exercise.name}: {exercise_set.series} x {exercise_set.repetitions}\n"
         return data
+    
+class GetExerciseInstructionsView(View):
+    def get(self, request, exercise_id):
+        exercise = get_object_or_404(Exercise, id=exercise_id)
+        instructions = exercise.instructions
+        return JsonResponse({'instructions': instructions})
