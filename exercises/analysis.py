@@ -1,5 +1,6 @@
 from collections import defaultdict
-from .models import LevelType, Muscle
+from .models import LevelType, Muscle,Exercise, CategoryType
+from django.db.models import Q
 
 class Analysis:
     def __init__(self, workout_routine):
@@ -126,7 +127,42 @@ class Analysis:
             "compound_isolation_ratio": round(compound_isolation_ratio, 2),
             "enough_compound": enough_compound
         }
+    
+    def suggest_exercises_for_untrained_muscles(self):
+        untrained_muscles = set(self.analyze_untrained_muscles())
+        suggested_exercises = {}
+        user_preferred_sport = self.workout_routine.user.preferred_sport
 
+        for muscle in untrained_muscles:
+            suggested_exercises[muscle] = []
+
+            # Najpierw szukamy ćwiczeń zgodnych z preferowanym sportem
+            preferred_exercises = Exercise.objects.filter(
+                Q(primary_muscles__contains=[muscle]) | Q(secondary_muscles__contains=[muscle]),
+                category=user_preferred_sport
+            ).values('name').distinct()[:3]
+
+            for exercise in preferred_exercises:
+                exercise_info = {
+                    'name': exercise['name'],
+                    'matches_preferred_sport': True
+                }
+                suggested_exercises[muscle].append(exercise_info)
+
+            # Jeśli mamy mniej niż 3 ćwiczenia, dodajemy inne
+            if len(suggested_exercises[muscle]) < 3:
+                other_exercises = Exercise.objects.filter(
+                    Q(primary_muscles__contains=[muscle]) | Q(secondary_muscles__contains=[muscle])
+                ).exclude(name__in=[e['name'] for e in suggested_exercises[muscle]]).values('name').distinct()[:3 - len(suggested_exercises[muscle])]
+
+                for exercise in other_exercises:
+                    exercise_info = {
+                        'name': exercise['name'],
+                        'matches_preferred_sport': False
+                    }
+                    suggested_exercises[muscle].append(exercise_info)
+
+        return suggested_exercises
 
     def get_analysis_report(self):
         trained_muscles = self.analyze_trained_muscles()
@@ -134,12 +170,13 @@ class Analysis:
         repetition_range_check = self.check_repetition_range()
         pull_push_analysis = self.analyze_pull_push_ratio()
         compound_isolation_analysis = self.analyze_compound_isolation_ratio()
-        
+        suggested_exercises = self.suggest_exercises_for_untrained_muscles()
         return {
             
             "trained_muscles": trained_muscles,
             "untrained_muscles": untrained_muscles,
             "repetition_range_check": repetition_range_check,
             "pull_push_analysis": pull_push_analysis,
-            "compound_isolation_analysis": compound_isolation_analysis
+            "compound_isolation_analysis": compound_isolation_analysis,
+            "suggested_exercises": suggested_exercises
         }

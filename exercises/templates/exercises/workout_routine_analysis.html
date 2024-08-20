@@ -35,6 +35,21 @@
     {% endfor %}
 </ul>
 
+<h2>Suggested exercises for untrained muscles</h2>
+{% for muscle, exercises in suggested_exercises.items %}
+    <h3>{{ muscle|title }}</h3>
+    <ul>
+    {% for exercise in exercises %}
+        <li>
+            {{ exercise.name }}
+            {% if exercise.matches_preferred_sport %}
+                <span class="badge bg-success">Perfect for preferred sport</span>
+            {% endif %}
+        </li>
+    {% endfor %}
+    </ul>
+{% endfor %}
+
 {% if repetition_range_check %}
 <h2>Repetition Range Analysis</h2>
 <p>Total exercises analyzed: {{ repetition_range_check.total_exercises }}</p>
