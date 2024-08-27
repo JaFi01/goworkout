@@ -1,3 +1,4 @@
+import random
 from django.contrib.postgres.fields import ArrayField
 from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, UserManager
 from django.contrib.auth import get_user_model
@@ -302,10 +303,28 @@ class User(AbstractBaseUser):
             self.bmi = round(self.weight / (height_in_meters ** 2), 2)
         else:
             self.bmi = None
+    
+    def days_since_joining(self):
+        if self.date_joined:
+            return (timezone.now().date() - self.date_joined.date()).days
+        return 0
 
     class Meta:
         db_table = 'users'
-    
 
-        
+class ExerciseOfTheDay(models.Model):
+    exercise = models.ForeignKey('Exercise', on_delete=models.CASCADE)
+    date = models.DateField(default=timezone.now, unique=True)
+
+    @classmethod
+    def get_or_create_for_today(cls):
+        today = timezone.now().date()
+        try:
+            return cls.objects.get(date=today)
+        except cls.DoesNotExist:
+            all_exercises = Exercise.objects.all()
+            if all_exercises:
+                random_exercise = random.choice(all_exercises)
+                return cls.objects.create(exercise=random_exercise, date=today)
+        return None       
               

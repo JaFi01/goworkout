@@ -1,0 +1,46 @@
+{% if exercise_of_day %}
+<div class="card mb-4">
+    <div class="card-header">
+        <h2 class="card-title">Exercise of the Day</h2>
+    </div>
+    <div class="card-body">
+        <h3>{{ exercise_of_day.exercise.name }}</h3>
+        <p><strong>Category:</strong> {{ exercise_of_day.exercise.category }}</p>
+        <p><strong>Level:</strong> {{ exercise_of_day.exercise.level }}</p>
+        {% if exercise_of_day.exercise.equipment %}
+            <p><strong>Equipment:</strong> {{ exercise_of_day.exercise.equipment }}</p>
+        {% endif %}
+        {% if exercise_of_day.exercise.primary_muscles %}
+            <p><strong>Primary Muscles:</strong> {{ exercise_of_day.exercise.primary_muscles|join:", " }}</p>
+        {% endif %}
+        {% if exercise_of_day.exercise.secondary_muscles %}
+            <p><strong>Secondary Muscles:</strong> {{ exercise_of_day.exercise.secondary_muscles|join:", " }}</p>
+        {% endif %}
+        {% if exercise_of_day.exercise.force %}
+            <p><strong>Force:</strong> {{ exercise_of_day.exercise.force }}</p>
+        {% endif %}
+        {% if exercise_of_day.exercise.mechanic %}
+            <p><strong>Mechanic:</strong> {{ exercise_of_day.exercise.mechanic }}</p>
+        {% endif %}
+        {% if exercise_of_day.exercise.description %}
+            <p><strong>Description:</strong> {{ exercise_of_day.exercise.description }}</p>
+        {% endif %}
+        {% if exercise_of_day.exercise.instructions %}
+            <h4>Instructions:</h4>
+            <ol>
+            {% for instruction in exercise_of_day.exercise.instructions %}
+                <li>{{ instruction }}</li>
+            {% endfor %}
+            </ol>
+        {% endif %}
+        {% if exercise_of_day.exercise.tips %}
+            <h4>Tips:</h4>
+            <ul>
+            {% for tip in exercise_of_day.exercise.tips %}
+                <li>{{ tip }}</li>
+            {% endfor %}
+            </ul>
+        {% endif %}
+    </div>
+</div>
+{% endif %}

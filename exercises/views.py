@@ -1,9 +1,10 @@
 import os
+import random
 from django import forms
 from django.http import HttpResponseRedirect, JsonResponse
 from django.shortcuts import render
 from django.views import View
-from django.views.generic import CreateView, FormView, UpdateView, ListView, DetailView, DeleteView
+from django.views.generic import CreateView, FormView, UpdateView, ListView, DetailView, DeleteView, TemplateView
 from django.shortcuts import get_object_or_404
 from django.contrib import messages
 from django.contrib.auth.views import LoginView
@@ -15,7 +16,7 @@ from django.views.decorators.http import require_POST
 from django.contrib.messages.views import SuccessMessageMixin
 from django.db.models import Count
 from .forms import UserRegistrationForm, UserPreferencesForm, WorkoutRoutineForm, PlanForDayForm, ExerciseSetForm
-from .models import User, WorkoutRoutine, PlanForDay, ExerciseSet, Exercise
+from .models import User, WorkoutRoutine, PlanForDay, ExerciseSet, Exercise, ExerciseOfTheDay
 from .analysis import Analysis
 from openai import OpenAI
 from django.conf import settings
@@ -23,9 +24,62 @@ from dotenv import load_dotenv
 import markdown2
 
 # Create your views here.
-class WelcomePageView(View):
-    def get(self, request):
-        return render(request, "exercises/welcome.html")
+class WelcomePageView(TemplateView):
+    template_name = "exercises/welcome.html"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['exercise_of_day'] = ExerciseOfTheDay.get_or_create_for_today()
+        
+        quotes = [
+        {
+            "author": "Arnold Schwarzenegger",
+            "text": "The last three or four reps is what makes the muscle grow. This area of pain divides a champion from someone who is not a champion."
+        },
+        {
+            "author": "Dorian Yates",
+            "text": "If you're willing to go through all the battling you have to go through to get where you want to get, who's got the right to stop you?"
+        },
+        {
+            "author": "Frank Zane",
+            "text": "The greatest feeling you can get in a gym, or the most satisfying feeling you can get in the gym is... The Pump."
+        },
+        {
+            "author": "Lou Ferrigno",
+            "text": "The resistance that you fight physically in the gym and the resistance that you fight in life can only build a strong character."
+        },
+        {
+            "author": "Lee Haney",
+            "text": "Exercise to stimulate, not to annihilate. The world wasn't formed in a day, and neither were we. Set small goals and build upon them."
+        },
+        {
+            "author": "Kai Greene",
+            "text": "A sculpture is just a painting cut out and stood up somewhere."
+        },
+        {
+            "author": "Franco Columbu",
+            "text": "The mind is the limit. As long as the mind can envision the fact that you can do something, you can do it, as long as you really believe 100 percent."
+        },
+        {
+            "author": "Ronnie Coleman",
+            "text": "There's no secret formula. I lift heavy, work hard, and aim to be the best."
+        },
+        {
+            "author": "Jay Cutler",
+            "text": "To be a champion, you must act like one, act like a champion."
+        },
+        {
+            "author": "Phil Heath",
+            "text": "Success is not an accident, success is a choice."
+        }
+    ]
+        context['quote'] = random.choice(quotes)
+        
+        if self.request.user.is_authenticated:
+            context['current_routine'] = WorkoutRoutine.objects.filter(user=self.request.user, is_current=True).first()
+            context['days_since_joining'] = self.request.user.days_since_joining()
+        
+        return context
     
 class UserRegistrationView(SuccessMessageMixin, CreateView):
     template_name = 'exercises/register.html'
@@ -359,3 +413,11 @@ class GetExerciseInstructionsView(View):
         exercise = get_object_or_404(Exercise, id=exercise_id)
         instructions = exercise.instructions
         return JsonResponse({'instructions': instructions})
+    
+class ExerciseOfDayView(TemplateView):
+    template_name = "exercises/exercise_of_day.html"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['exercise_of_day'] = ExerciseOfTheDay.get_or_create_for_today()
+        return context

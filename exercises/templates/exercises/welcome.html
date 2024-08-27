@@ -2,6 +2,77 @@
 {% block title %}Welcome to GoWorkout{% endblock %}
 
 {% block content %}
-    <h1>Welcome to GoWorkout</h1>
-    <p>This is a basic welcome page.</p>
+<div class="container mt-4">
+    <h1 class="mb-4">Welcome to GoWorkout</h1>
+    
+    <p class="lead mb-4">GoWorkout is a web application that helps you analyze your workout routine and suggests exercises to improve it.</p>
+    
+    <div class="row">
+        <div class="col-md-6">
+            {% include "exercises/exercise_of_day.html" %}
+        </div>
+        <div class="col-md-6">
+            <div class="card mb-4">
+                <div class="card-body">
+                    <h2 class="card-title">Bodybuilder's Quote</h2>
+                    <blockquote class="blockquote">
+                        <p class="mb-3">{{ quote.text }}</p>
+                        <footer class="blockquote-footer">{{ quote.author }}</footer>
+                    </blockquote>
+                </div>
+            </div>
+
+            <div class="card mt-3">
+                <div class="card-header">
+                    <h3 class="card-title">Your Personal Stats</h3>
+                </div>
+                <div class="card-body">
+                    {% if user.is_authenticated %}
+                        <ul class="list-group list-group-flush">
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                Weight
+                                <span class="badge bg-primary rounded-pill">{{ user.weight|default:"Not set" }} kg</span>
+                            </li>
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                BMI
+                                <span class="badge bg-info rounded-pill">{{ user.bmi|default:"Not calculated" }}</span>
+                            </li>
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                Workout Routines Created
+                                <span class="badge bg-success rounded-pill">{{ user.workout_routines.count }}</span>
+                            </li>
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                Days Since Joining
+                                <span class="badge bg-secondary rounded-pill">{{ days_since_joining }}</span>
+                            </li>
+                        </ul>
+                        <div class="mt-3">
+                            <a href="{% url 'user_preferences' %}" class="btn btn-outline-primary btn-sm">Update Profile</a>
+                        </div>
+                    {% else %}
+                        <p class="card-text">Log in, or create account to see your personal statistics and progress!</p>
+                    {% endif %}
+                </div>
+            </div>
+            
+            {% if user.is_authenticated %}
+                {% if current_routine %}
+                    <a href="{% url 'workout_routine_list' %}" class="btn btn-primary btn-lg btn-block">Display Workouts</a>
+                {% else %}
+                    <div class="alert alert-info" role="alert">
+                        <h4 class="alert-heading">No Current Routine</h4>
+                        <p>You don't have a current workout routine yet. Create one to start your fitness journey!</p>
+                        <hr>
+                        <a href="{% url 'workout_routine_create' %}" class="btn btn-success btn-lg btn-block">Create New Routine</a>
+                    </div>
+                {% endif %}
+            {% else %}
+                <div class="d-grid gap-2">
+                    <a href="{% url 'register' %}" class="btn btn-primary btn-lg">Sign Up</a>
+                    <a href="{% url 'login' %}" class="btn btn-secondary btn-lg">Log In</a>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
 {% endblock %}
