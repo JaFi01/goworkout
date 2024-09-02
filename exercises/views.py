@@ -380,10 +380,10 @@ class WorkoutRoutineAnalysisView(LoginRequiredMixin, DetailView):
     
 class AskAIView(LoginRequiredMixin, View):
     def post(self, request, routine_id):
-        load_dotenv()
         routine = get_object_or_404(WorkoutRoutine, id=routine_id, user=request.user)
         routine_data = self.prepare_routine_data(routine)
         client = OpenAI()
+        load_dotenv()
         client.api_key = os.getenv('OPENAI_API_KEY')
         try:    
             response  = client.chat.completions.create(

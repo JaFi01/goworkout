@@ -1,7 +1,7 @@
 {% extends 'base.html' %}
 
 {% block content %}
-<h2>Potwierdzenie usunięcia</h2>
+<h2>Delete daily routine</h2>
 <p>Are You sure You want to delete daily routine:  "{{ object.custom_name }}" {{ object.get_day_of_week_display }}?</p>
 <form method="post">
     {% csrf_token %}

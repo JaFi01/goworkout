@@ -18,12 +18,9 @@
 
 <p>Notes: {{ routine.notes }}</p>
 
-<div class="d-flex align-items-center mb-3">
-    <a href="{% url 'workout_routine_analysis' routine.pk %}" class="btn btn-primary me-2">Analizuj plan</a>
-    <button id="askAIButton" data-routine-id="{{ routine.id }}" class="btn btn-primary">Ask AI</button>
-</div>
+<a href="{% url 'workout_routine_analysis' routine.pk %}" class="btn btn-primary">Analysis</a>
 
-<div id="aiResponse" style="display: none;">
+<button id="askAIButton" data-routine-id="{{ routine.id }}" class="btn btn-primary">AI feedback</button><div id="aiResponse" style="display: none;">
     <h3>AI Analysis</h3>
     <div id="aiResponseContent"></div>
 </div>

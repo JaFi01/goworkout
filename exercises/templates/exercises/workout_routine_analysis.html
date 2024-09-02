@@ -53,23 +53,36 @@
 {% if repetition_range_check %}
 <h2>Repetition Range Analysis</h2>
 <p>Total exercises analyzed: {{ repetition_range_check.total_exercises }}</p>
-<p>Exercises in 8-12 repetition range: {{ repetition_range_check.exercises_in_range }}</p>
+<p>Exercises in 6-12 repetition range: {{ repetition_range_check.exercises_in_range }}</p>
 <p>Percentage: {{ repetition_range_check.percentage }}%</p>
 <p>
     {% if repetition_range_check.meets_criteria %}
-    <strong style="color: green;">You have enought exercises in 8-12 repetition range</strong>
+    <strong style="color: green;">You have enought exercises in 6-12 repetition range</strong>
     {% else %}
-    <strong style="color: red;">Over half of important exercises are not in 8-12 range. Consider adjusting Your schedule.</strong>
+    <strong style="color: red;">Over half of important exercises are not in 6-12 range. Consider adjusting Your schedule.</strong>
     {% endif %}
 </p>
 {% else %}
 <p>Repetition range analysis is not applicable for advanced fitness levels.</p>
+{% endif %}
+<h2>Compound and Isolation Exercises Analysis</h2>
+<p>Number of compound exercises: {{ compound_isolation_analysis.compound_exercises }}</p>
+<p>Number of isolation exercises: {{ compound_isolation_analysis.isolation_exercises }}</p>
+<p>Total number of exercises: {{ compound_isolation_analysis.total_exercises }}</p>
+
+{% if compound_isolation_analysis.is_balanced %}
+    <p class="text-success">{{ compound_isolation_analysis.message }}</p>
+{% else %}
+    <p class="text-warning">{{ compound_isolation_analysis.message }}</p>
 {% endif %}
 
 <h2>Pull vs Push Analysis</h2>
 <p>Total Pull Series: {{ pull_push_analysis.pull_series }}</p>
 <p>Total Push Series: {{ pull_push_analysis.push_series }}</p>
 <p>Pull to Push Ratio: {{ pull_push_analysis.pull_push_ratio }}</p>
+
+
+
 
 {% if pull_push_analysis.pull_deficit %}
     <p class="alert alert-warning">
@@ -87,5 +100,5 @@
     </p>
 {% endif %}
 
-<a href="{% url 'workout_routine_detail' routine.pk %}" class="btn btn-primary mt-3">Back to Routine Details</a>
+<a href="{% url 'workout_routine_detail' routine.pk %}" class="btn btn-primary my-3 mb-5 ">Back to Routine Details</a>
 {% endblock %}

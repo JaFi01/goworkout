@@ -48,7 +48,7 @@ class Analysis:
                 exercise = exercise_set.exercise
                 if not any(muscle in self.excluded_muscles for muscle in exercise.primary_muscles + exercise.secondary_muscles):
                     total_exercises += 1
-                    if 8 <= exercise_set.repetitions <= 12:
+                    if 6 <= exercise_set.repetitions <= 12:
                         exercises_in_range += 1
 
         if total_exercises == 0:
@@ -114,18 +114,24 @@ class Analysis:
             return {
                 "compound_exercises": 0,
                 "isolation_exercises": 0,
-                "compound_isolation_ratio": 0,
-                "enough_compound": False
+                "total_exercises": 0,
+                "is_balanced": False,
+                "message": "No exercises in the routine."
             }
 
-        compound_isolation_ratio = compound_exercises / isolation_exercises if isolation_exercises > 0 else float('inf')
-        enough_compound = compound_exercises > isolation_exercises
+        is_balanced = compound_exercises > isolation_exercises
+        
+        if is_balanced:
+            message = "Correct proportion of compound to isolation exercises."
+        else:
+            message = "Not enough compound exercises compared to isolation exercises. Consider adding more compound exercises."
 
         return {
             "compound_exercises": compound_exercises,
             "isolation_exercises": isolation_exercises,
-            "compound_isolation_ratio": round(compound_isolation_ratio, 2),
-            "enough_compound": enough_compound
+            "total_exercises": total_exercises,
+            "is_balanced": is_balanced,
+            "message": message
         }
     
     def suggest_exercises_for_untrained_muscles(self):
@@ -135,8 +141,7 @@ class Analysis:
 
         for muscle in untrained_muscles:
             suggested_exercises[muscle] = []
-
-            # Najpierw szukamy ćwiczeń zgodnych z preferowanym sportem
+            # Firstly we search for exercises that match user's preferred sport
             preferred_exercises = Exercise.objects.filter(
                 Q(primary_muscles__contains=[muscle]) | Q(secondary_muscles__contains=[muscle]),
                 category=user_preferred_sport
@@ -149,7 +154,6 @@ class Analysis:
                 }
                 suggested_exercises[muscle].append(exercise_info)
 
-            # Jeśli mamy mniej niż 3 ćwiczenia, dodajemy inne
             if len(suggested_exercises[muscle]) < 3:
                 other_exercises = Exercise.objects.filter(
                     Q(primary_muscles__contains=[muscle]) | Q(secondary_muscles__contains=[muscle])
