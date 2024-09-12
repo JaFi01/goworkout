@@ -63,7 +63,6 @@ class WorkoutRoutineForm(forms.ModelForm):
             self.add_error('begin_date', 'Invalid date format')
         if end_date and not isinstance(end_date, date):
             self.add_error('end_date', 'Invalid date format')
-
         if isinstance(begin_date, date) and isinstance(end_date, date):
             if end_date < begin_date:
                 self.add_error('end_date', 'End date cannot be earlier than begin date')

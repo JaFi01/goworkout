@@ -86,8 +86,8 @@ class Analysis:
             }
 
         pull_push_ratio = pull_series / push_series if push_series > 0 else float('inf')
-        pull_deficit = pull_push_ratio < 0.75
-        push_deficit = pull_push_ratio > 3
+        pull_deficit = pull_push_ratio < 0.5
+        push_deficit = pull_push_ratio > 2
 
         return {
             "pull_series": pull_series,
