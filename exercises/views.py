@@ -32,47 +32,99 @@ class WelcomePageView(TemplateView):
         context['exercise_of_day'] = ExerciseOfTheDay.get_or_create_for_today()
         
         quotes = [
-        {
-            "author": "Arnold Schwarzenegger",
-            "text": "The last three or four reps is what makes the muscle grow. This area of pain divides a champion from someone who is not a champion."
-        },
-        {
-            "author": "Dorian Yates",
-            "text": "If you're willing to go through all the battling you have to go through to get where you want to get, who's got the right to stop you?"
-        },
-        {
-            "author": "Frank Zane",
-            "text": "The greatest feeling you can get in a gym, or the most satisfying feeling you can get in the gym is... The Pump."
-        },
-        {
-            "author": "Lou Ferrigno",
-            "text": "The resistance that you fight physically in the gym and the resistance that you fight in life can only build a strong character."
-        },
-        {
-            "author": "Lee Haney",
-            "text": "Exercise to stimulate, not to annihilate. The world wasn't formed in a day, and neither were we. Set small goals and build upon them."
-        },
-        {
-            "author": "Kai Greene",
-            "text": "A sculpture is just a painting cut out and stood up somewhere."
-        },
-        {
-            "author": "Franco Columbu",
-            "text": "The mind is the limit. As long as the mind can envision the fact that you can do something, you can do it, as long as you really believe 100 percent."
-        },
-        {
-            "author": "Ronnie Coleman",
-            "text": "There's no secret formula. I lift heavy, work hard, and aim to be the best."
-        },
-        {
-            "author": "Jay Cutler",
-            "text": "To be a champion, you must act like one, act like a champion."
-        },
-        {
-            "author": "Phil Heath",
-            "text": "Success is not an accident, success is a choice."
-        }
-    ]
+    {
+        "author": "Jim Rohn",
+        "text": "Discipline is the bridge between goals and accomplishments."
+    },
+    {
+        "author": "Dwayne 'The Rock' Johnson",
+        "text": "Success isn't always about greatness. It's about consistency. Consistent hard work gains success. Greatness will come."
+    },
+    {
+        "author": "Muhammad Ali",
+        "text": "Champions aren't made in the gyms. Champions are made from something they have deep inside them-a desire, a dream, a vision."
+    },
+    {
+        "author": "Henry Rollins",
+        "text": "Strength is the product of struggle, you must do what others don't to achieve what others won't."
+    },
+    {
+        "author": "Ghandi",
+        "text": "Strength does not come from the physical capacity. It comes from an indomitable will."
+    },
+    {
+        "author": "Arnold Schwarzenegger",
+        "text": "Training gives us an outlet for suppressed energies created by stress and thus tones the spirit just as exercise conditions the body."
+    },
+    {
+        "author": "Jenny Craig",
+        "text": "It's not what you do once in a while; it's what you do day in and day out that makes the difference."
+    },
+    {
+        "author": "Stephen King",
+        "text": "Talent is cheaper than table salt. What separates the talented individual from the successful one is a lot of hard work."
+    },
+    {
+        "author": "Mark Bell",
+        "text": "The road to nowhere is paved with excuses."
+    },
+    {
+        "author": "Ronnie Coleman",
+        "text": "When you hit failure, your workout has just begun."
+    },
+    {
+        "author": "Serge Nubret",
+        "text": "A bodybuilder is a sculptor who carries with him his own material."
+    },
+    {
+        "author": "Dan John",
+        "text": "Most champions are built by punch the clock workouts rather than extraordinary efforts."
+    },
+    {
+        "author": "Lee Haney",
+        "text": "Stimulate don't annihilate."
+    },
+    {
+        "author": "Ronda Rousey",
+        "text": "Just believe in yourself. Even if you don't, pretend that you do and at some point you will."
+    },
+    {
+        "author": "J.R. Rim",
+        "text": "I don't diet and exercise. I eat and train."
+    },
+    {
+        "author": "Kai Greene",
+        "text": "You have to think it before you can do it. The mind is what makes it all possible."
+    },
+    {
+        "author": "Craig Cecil",
+        "text": "The barbells and dumbbells you hold in your hands and the way you use them have stories to tell."
+    },
+    {
+        "author": "Michael Jordan",
+        "text": "Some people want it to happen, some wish it would happen, others make it happen."
+    },
+    {
+        "author": "Sam Levenson",
+        "text": "Don't watch the clock; do what it does. Keep going."
+    },
+    {
+        "author": "Jack LaLanne",
+        "text": "Exercise is king. Nutrition is queen. Put them together and you've got a kingdom."
+    },
+    {
+        "author": "Confucius",
+        "text": "It does not matter how slowly you go, as long as you do not stop."
+    },
+    {
+        "author": "Florence Nightingale",
+        "text": "I attribute my success to this: I never gave or took any excuse."
+    },
+    {
+        "author": "Baltasar Gracián",
+        "text": "Be content to act, and leave the talking to others."
+    }
+]
         context['quote'] = random.choice(quotes)
         
         if self.request.user.is_authenticated:

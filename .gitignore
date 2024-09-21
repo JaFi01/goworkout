@@ -9,3 +9,5 @@ build/
 *.log
 .vscode/
 .vscode
+instrukcja.txt
+goworkout_db.backup
